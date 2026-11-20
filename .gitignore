@@ -1,0 +1,15 @@
+/node_modules/
+# vendor/ is built per machine EXCEPT aps-common's src/, which is committed (aps-common ADR 0001):
+# the release tarball carries it as tracked bytes. Composer's extras under vendor/aps stay ignored.
+/vendor/*
+!/vendor/aps/
+/vendor/aps/*
+!/vendor/aps/common/
+/vendor/aps/common/*
+!/vendor/aps/common/src/
+# js/ is built, not committed: the release builds it before packing.
+/js/
+*.js.map
+/.phpunit.cache/
+/tools/composer.phar
+/tools/openapi/

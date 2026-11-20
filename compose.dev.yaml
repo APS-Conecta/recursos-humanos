@@ -1,0 +1,56 @@
+# Throwaway Nextcloud 34 + PostgreSQL 18 for developing and testing «Recursos Humanos», on 8094.
+#
+# NOT the suite: it shares none of its .env, provisioning or data. Throw it away whenever it
+# gets in the way (`make instance-clean`). The images are «IA»'s and Estadística's. The memory
+# ceilings are the shared box's rule: no container without one.
+name: recursos-humanos-dev
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: "no"
+    mem_limit: 1g
+    volumes:
+      # postgres:18+ stores data in a major-version subdir, so mount the parent.
+      - dev_postgres:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextcloud -d nextcloud"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nextcloud:
+    image: nextcloud:34-apache
+    restart: "no"
+    mem_limit: 1536m
+    ports:
+      - "127.0.0.1:8094:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - dev_nextcloud:/var/www/html
+      # The repo itself mounted as the app: edit here, see it live.
+      - .:/var/www/html/custom_apps/recursos_humanos
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: dev
+      NEXTCLOUD_ADMIN_USER: admin
+      NEXTCLOUD_ADMIN_PASSWORD: admin
+      NEXTCLOUD_TRUSTED_DOMAINS: localhost
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/status.php || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+volumes:
+  dev_postgres:
+  dev_nextcloud:

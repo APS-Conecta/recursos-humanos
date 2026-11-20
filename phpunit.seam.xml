@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The seam suite (recursos-humanos#1): runs INSIDE the dev Nextcloud container and reaches «Recursos Humanos»
+  only through its OCS API and occ, never its classes. Separate from phpunit.xml on
+  purpose: the static gates must stay runnable in a bare PHP container.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         cacheDirectory="/tmp/recursos-humanos-phpunit-seam">
+    <testsuites>
+        <testsuite name="seam">
+            <directory>tests/seam</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
