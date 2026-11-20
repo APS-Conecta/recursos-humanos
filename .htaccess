@@ -1,0 +1,12 @@
+# Webroot hygiene for a dev checkout mounted as the app (Estadística's, which is farmacia's):
+# the app serves only js/, img/ and templates/; everything else 404s, never 403s, so the server
+# is not an existence oracle. The release tarball ships none of what this denies.
+Options -Indexes
+<FilesMatch "^(composer\.json|composer\.lock|package\.json|package-lock\.json|openapi\.json|phpunit.*\.xml|Makefile|Dockerfile.*|compose\..*|\.gitignore)$">
+	Require all denied
+</FilesMatch>
+<FilesMatch "\.map$">
+	Require all denied
+</FilesMatch>
+RewriteEngine On
+RewriteRule ^(src|tests|lib|appinfo|scripts|docs|tools|node_modules|vendor|\.git)(/|$) - [R=404,L]

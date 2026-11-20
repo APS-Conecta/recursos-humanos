@@ -1,0 +1,67 @@
+# «Recursos Humanos»' CI, «IA»'s shape: the static gates in a bare PHP container after the
+# aps-common drift gate, the frontend's lint and bundle, and the one seam (recursos-humanos#1)
+# against a real throwaway instance. The release workflow packs the tarball on every pull
+# request (release.yml).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: aps-common drift and static gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      # aps-common is public: the sibling the Makefile and composer.json read.
+      - run: git clone --depth 1 https://github.com/APS-Conecta/aps-common.git ../aps-common
+      # Drift BEFORE the tests: `make test` runs in a root container whose composer install
+      # copies aps-common into vendor/aps/common root-owned, and aps-sync then dies with
+      # "Permission denied" (farmacia 773d0bf).
+      - run: make aps-drift
+      - run: make test
+
+  js:
+    name: Frontend lint and bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      - run: npm run lint-js
+      - run: make bundles
+
+  seam:
+    name: Seam (Nextcloud 34 + PostgreSQL 18)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: git clone --depth 1 https://github.com/APS-Conecta/aps-common.git ../aps-common
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      # the bundle the instance serves: js/ is built, not committed
+      - run: npm run build
+      - run: make deps
+      - name: The throwaway instance (Nextcloud 34, PostgreSQL 18)
+        run: make instance-up
+      - name: The seam suite
+        run: make test-seam
+      - name: openapi.json regenerates without drift
+        run: make openapi && git diff --exit-code openapi.json
+      - name: Tear down
+        if: always()
+        run: make instance-clean

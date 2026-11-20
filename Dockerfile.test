@@ -1,0 +1,10 @@
+# Local test image: PHP 8.2 CLI + composer, nothing else (Estadística's).
+#
+# The static gates run here against nextcloud/ocp; everything that touches a live server
+# runs against compose.dev.yaml instead.
+FROM php:8.2-cli
+# zip is composer's: it cannot unpack a dist archive without it.
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/bin/
+RUN install-php-extensions zip
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+WORKDIR /app

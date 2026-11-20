@@ -1,0 +1,174 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "recursos_humanos",
+        "version": "0.1.0",
+        "description": "Feriado legal, días administrativos y permisos del personal del establecimiento, con su registro oficial.",
+        "license": {
+            "name": "AGPL-3.0-or-later"
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "basic_auth": {
+                "type": "http",
+                "scheme": "basic"
+            },
+            "bearer_auth": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        },
+        "schemas": {
+            "OCSMeta": {
+                "type": "object",
+                "required": [
+                    "status",
+                    "statuscode"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "statuscode": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "totalitems": {
+                        "type": "string"
+                    },
+                    "itemsperpage": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/me": {
+            "get": {
+                "operationId": "api-me",
+                "summary": "Who the caller is to «Recursos Humanos»: their account and the roles their cargo groups give",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The caller and their roles",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "uid",
+                                                        "roles"
+                                                    ],
+                                                    "properties": {
+                                                        "uid": {
+                                                            "type": "string"
+                                                        },
+                                                        "roles": {
+                                                            "type": "object",
+                                                            "required": [
+                                                                "hrOfficer",
+                                                                "director",
+                                                                "subdirector"
+                                                            ],
+                                                            "properties": {
+                                                                "hrOfficer": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "director": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "subdirector": {
+                                                                    "type": "boolean"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "api",
+            "description": "«Recursos Humanos» over OCS: API v1, the one its own pages read and outside systems use (recursos-humanos#1, API contract). v1 only grows; a change that would break callers ships as v2 beside it. Consumers send `OCS-APIRequest: true`, which is also the CSRF protection, and get the OCS envelope back; a session or a Nextcloud app password signs them in. Every route is attribute-routed, open to any signed-in person and rate-limited (MetadataTest holds all three); who may see what is checked inside each action, through Access."
+        }
+    ]
+}
