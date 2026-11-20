@@ -12,12 +12,13 @@ namespace OCA\RecursosHumanos\Tests\Seam;
  * Humanos' cargo group, the Director and the Subdirector of theirs (CONTEXT.md).
  */
 class MeTest extends SeamTestCase {
+	private const ME = '/apps/recursos_humanos/api/v1/me';
 	private const NO_ROLE = ['hrOfficer' => false, 'director' => false, 'subdirector' => false];
 
 	public function testAStaffMemberHasNoRole(): void {
 		$staff = self::person();
 
-		$answer = self::ocs($staff, 'GET', '/apps/recursos_humanos/api/v1/me');
+		$answer = self::ocs($staff, 'GET', self::ME);
 
 		self::assertSame(200, $answer['status']);
 		self::assertSame(['uid' => $staff, 'roles' => self::NO_ROLE], $answer['data']);
@@ -27,7 +28,7 @@ class MeTest extends SeamTestCase {
 		$officer = self::person();
 		self::joins($officer, 'role-recursos-humanos');
 
-		$roles = self::ocs($officer, 'GET', '/apps/recursos_humanos/api/v1/me')['data']['roles'];
+		$roles = self::ocs($officer, 'GET', self::ME)['data']['roles'];
 
 		self::assertSame(array_replace(self::NO_ROLE, ['hrOfficer' => true]), $roles);
 	}
@@ -38,11 +39,11 @@ class MeTest extends SeamTestCase {
 		$subdirector = self::person();
 		self::joins($subdirector, 'role-subdirector-jefe-tecnico');
 
-		self::assertSame(array_replace(self::NO_ROLE, ['director' => true]), self::ocs($director, 'GET', '/apps/recursos_humanos/api/v1/me')['data']['roles']);
-		self::assertSame(array_replace(self::NO_ROLE, ['subdirector' => true]), self::ocs($subdirector, 'GET', '/apps/recursos_humanos/api/v1/me')['data']['roles']);
+		self::assertSame(array_replace(self::NO_ROLE, ['director' => true]), self::ocs($director, 'GET', self::ME)['data']['roles']);
+		self::assertSame(array_replace(self::NO_ROLE, ['subdirector' => true]), self::ocs($subdirector, 'GET', self::ME)['data']['roles']);
 	}
 
 	public function testNobodyReadsItWithoutSigningIn(): void {
-		self::assertSame(401, self::ocs(null, 'GET', '/apps/recursos_humanos/api/v1/me')['status']);
+		self::assertSame(401, self::ocs(null, 'GET', self::ME)['status']);
 	}
 }

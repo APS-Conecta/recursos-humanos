@@ -25,7 +25,7 @@ its tickets live in this repo.
   `node_modules/`.
 - **Never edit by hand** `package-lock.json`, `composer.lock`, the dependency lists in `package.json` and
   `composer.json` outside a ticket that names the dependency, `openapi.json` (generated from `ApiController` by
-  `make openapi`; MetadataTest and CI fail on drift), or aps-common's copies `vendor/aps/common/src/`, `src/aps/`
+  `make openapi`; CI fails on drift, MetadataTest on its version and description), or aps-common's copies `vendor/aps/common/src/`, `src/aps/`
   and `tests/stubs/OC/Hooks/Emitter.php` (`make aps-sync`; `make aps-drift` fails on drift).
 - **Strings:** what a person reads (templates, pages, messages) is Spanish, written as literals, in tú as the mockup
   writes it; this app uses no `t()` / `$l->t()`, like its siblings. Code, comments, commits and PR text are English.

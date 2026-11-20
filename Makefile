@@ -37,7 +37,7 @@ bundles:
 
 # The cargo groups the suite's Provisionador creates (gestion-aio teams.py), so roles read here
 # as they do on the suite. The enable runs the app's migrations as a clinic's occ app:enable does.
-GROUPS := role-recursos-humanos role-director-cesfam role-subdirector-jefe-tecnico cat-jefaturas
+GROUPS := role-recursos-humanos role-director-cesfam role-subdirector-jefe-tecnico
 
 instance-up:
 	$(COMPOSE) up -d --wait

@@ -17,7 +17,7 @@
 		</NcAppNavigation>
 
 		<NcAppContent :page-heading="current.name">
-			<EmptyPage :key="view" :title="current.name" :empty="current.empty" :icon="current.icon" />
+			<EmptyPage :title="current.name" :empty="current.empty" :icon="current.icon" />
 		</NcAppContent>
 	</NcContent>
 </template>
@@ -34,7 +34,7 @@ import { mdiCalendarAccountOutline, mdiFormatListBulleted } from './icons.js'
 /** Everyone's two pages, empty until the person's record is complete (recursos-humanos#3, #5). */
 const ENTRIES = [
 	{
-		id: 'mis-dias',
+		id: 'my-days',
 		name: 'Mis días',
 		icon: mdiCalendarAccountOutline,
 		empty: {
@@ -43,7 +43,7 @@ const ENTRIES = [
 		},
 	},
 	{
-		id: 'mis-solicitudes',
+		id: 'my-requests',
 		name: 'Mis solicitudes',
 		icon: mdiFormatListBulleted,
 		empty: {
@@ -56,7 +56,8 @@ const ENTRIES = [
 export default {
 	name: 'App',
 	components: { EmptyPage, NcAppContent, NcAppNavigation, NcAppNavigationItem, NcContent, NcIconSvgWrapper },
-	data: () => ({ view: 'mis-dias', entries: ENTRIES }),
+	setup: () => ({ entries: ENTRIES }),
+	data: () => ({ view: 'my-days' }),
 	computed: {
 		current() {
 			return ENTRIES.find((entry) => entry.id === this.view)
