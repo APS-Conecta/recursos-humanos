@@ -17,10 +17,10 @@ use RecursiveIteratorIterator;
  */
 class StringsTest extends TestCase {
 	private const APP_DIR = __DIR__ . '/../..';
-	/** A translation call or import, PHP or JS. */
-	private const TRANSLATION = '/\bIL10N\b|->t\(|->n\(|@nextcloud\/l10n/';
+	/** A translation call or import, PHP or JS: $l->t(…), t('app', …) in a template, window.n('app', …). */
+	private const TRANSLATION = '/\bIL10N\b|->t\(|->n\(|@nextcloud\/l10n|\b[tn]\(\s*[\'"]\w+[\'"]\s*,/';
 	/** The formal imperatives a sibling's copy would bring in, opening a sentence. */
-	private const USTED = '/(?:^|[.!?¿¡«"\'>])\s*(Escriba|Elija|Revise|Ingrese|Seleccione|Intente|Recargue|Avise|Vuelva|Agregue|Cambie|Descargue|Suba|Guarde|Confirme|Pida)\b/mu';
+	private const USTED = '/(?:^|[.!?¿¡«"\'>`])\s*(Escriba|Elija|Revise|Ingrese|Seleccione|Intente|Recargue|Avise|Vuelva|Agregue|Cambie|Descargue|Suba|Guarde|Confirme|Pida|Haga|Pulse|Presione|Espere|Verifique|Asegúrese|Indique|Contacte|Introduzca|Inténtelo)\b/mu';
 
 	/** @return array<string, string> each file a person's text lives in, by its path in the repo */
 	private function sources(): array {

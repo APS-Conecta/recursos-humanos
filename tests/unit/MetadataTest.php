@@ -122,7 +122,7 @@ class MetadataTest extends TestCase {
 
 		$schemas = [];
 		$collect = static function (array $node, string $at) use (&$collect, &$schemas): void {
-			if (isset($node['enum']) && array_key_exists('default', $node)) {
+			if (isset($node['enum'])) {
 				$schemas[$at] = $node;
 			}
 			foreach ($node as $key => $child) {
@@ -132,7 +132,11 @@ class MetadataTest extends TestCase {
 			}
 		};
 		$collect($spec, '');
+		self::assertNotEmpty($schemas, 'openapi.json has enums to check');
 		foreach ($schemas as $at => $schema) {
+			if (!array_key_exists('default', $schema)) {
+				continue;
+			}
 			$allowed = ($schema['nullable'] ?? false) ? [...$schema['enum'], null] : $schema['enum'];
 			self::assertContains($schema['default'], $allowed, "$at: the default is not one of its enum values");
 		}
@@ -141,7 +145,7 @@ class MetadataTest extends TestCase {
 		foreach ($spec['paths'] as $path => $operations) {
 			foreach ($operations as $verb => $operation) {
 				$body = $operation['requestBody']['content']['application/json']['schema'] ?? null;
-				if (is_array($operation) && $body !== null) {
+				if ($body !== null) {
 					$bodies++;
 					self::assertNotEmpty($body['required'] ?? [], strtoupper($verb) . " $path takes a body but requires none of its fields");
 				}
