@@ -138,7 +138,8 @@ class People {
 	 * @return RecursosHumanosPerson
 	 * @throws Forbidden not an HR officer
 	 * @throws DoesNotExistException no such account
-	 * @throws Refused a field is missing or wrong, the RUT is someone else's, or the record exists
+	 * @throws Refused a field is missing or wrong, the Regime starts after the start date, the RUT is
+	 *                 someone else's, or the record exists
 	 */
 	public function complete(string $actor, string $uid, string $rut, string $givenNames, string $surnames, string $startDate,
 		string $regime, string $regimeFrom, int $priorMonths, bool $shift, ?string $jefatura): array {
