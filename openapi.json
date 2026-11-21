@@ -20,6 +20,21 @@
             }
         },
         "schemas": {
+            "Account": {
+                "type": "object",
+                "required": [
+                    "uid",
+                    "name"
+                ],
+                "properties": {
+                    "uid": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            },
             "OCSMeta": {
                 "type": "object",
                 "required": [
@@ -41,6 +56,168 @@
                     },
                     "itemsperpage": {
                         "type": "string"
+                    }
+                }
+            },
+            "Person": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/PersonItem"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "startDate",
+                            "priorMonths",
+                            "shift",
+                            "regimes",
+                            "trail"
+                        ],
+                        "properties": {
+                            "startDate": {
+                                "type": "string"
+                            },
+                            "priorMonths": {
+                                "type": "integer",
+                                "format": "int64"
+                            },
+                            "shift": {
+                                "type": "boolean"
+                            },
+                            "regimes": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/RegimeLine"
+                                }
+                            },
+                            "trail": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/TrailStep"
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "PersonItem": {
+                "type": "object",
+                "required": [
+                    "uid",
+                    "name",
+                    "cargos",
+                    "complete",
+                    "rut",
+                    "givenNames",
+                    "surnames",
+                    "regime",
+                    "jefatura"
+                ],
+                "properties": {
+                    "uid": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "cargos": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "complete": {
+                        "type": "boolean"
+                    },
+                    "rut": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "givenNames": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "surnames": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "regime": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "estatutoAps",
+                            "honorarios"
+                        ]
+                    },
+                    "jefatura": {
+                        "nullable": true,
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Account"
+                            }
+                        ]
+                    }
+                }
+            },
+            "RegimeLine": {
+                "type": "object",
+                "required": [
+                    "regime",
+                    "from"
+                ],
+                "properties": {
+                    "regime": {
+                        "type": "string",
+                        "enum": [
+                            "estatutoAps",
+                            "honorarios"
+                        ]
+                    },
+                    "from": {
+                        "type": "string"
+                    }
+                }
+            },
+            "TrailStep": {
+                "type": "object",
+                "required": [
+                    "kind",
+                    "actor",
+                    "at",
+                    "regime",
+                    "from",
+                    "reason"
+                ],
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "completed",
+                            "regime"
+                        ]
+                    },
+                    "actor": {
+                        "$ref": "#/components/schemas/Account"
+                    },
+                    "at": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "regime": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "estatutoAps",
+                            "honorarios"
+                        ]
+                    },
+                    "from": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "reason": {
+                        "type": "string",
+                        "nullable": true
                     }
                 }
             }
@@ -163,12 +340,788 @@
                     }
                 }
             }
+        },
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/people": {
+            "get": {
+                "operationId": "api-people",
+                "summary": "«Personal»: every account with its person record, sorted by name, those without one marked incomplete («Falta completar»); anyone but an HR officer gets only their own",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The people the caller may see",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "people"
+                                                    ],
+                                                    "properties": {
+                                                        "people": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/PersonItem"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api-complete-record",
+                "summary": "«Completar ficha»: an HR officer writes the record of an account that has none, with its first Regime line",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "uid",
+                                    "rut",
+                                    "givenNames",
+                                    "surnames",
+                                    "startDate",
+                                    "regime",
+                                    "regimeFrom"
+                                ],
+                                "properties": {
+                                    "uid": {
+                                        "type": "string",
+                                        "description": "The account's uid"
+                                    },
+                                    "rut": {
+                                        "type": "string",
+                                        "description": "The RUT with its verifier digit, with or without dots; unique in the establishment"
+                                    },
+                                    "givenNames": {
+                                        "type": "string",
+                                        "description": "The legal nombres"
+                                    },
+                                    "surnames": {
+                                        "type": "string",
+                                        "description": "The legal apellidos"
+                                    },
+                                    "startDate": {
+                                        "type": "string",
+                                        "description": "The start date, YYYY-MM-DD"
+                                    },
+                                    "regime": {
+                                        "type": "string",
+                                        "enum": [
+                                            "estatutoAps",
+                                            "honorarios"
+                                        ],
+                                        "description": "The Regime"
+                                    },
+                                    "regimeFrom": {
+                                        "type": "string",
+                                        "description": "The date the Regime applies from, YYYY-MM-DD"
+                                    },
+                                    "priorMonths": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "default": 0,
+                                        "description": "Prior public service, in months"
+                                    },
+                                    "shift": {
+                                        "type": "boolean",
+                                        "default": false,
+                                        "description": "Whether the person works shifts"
+                                    },
+                                    "jefatura": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "default": null,
+                                        "description": "The Jefatura's uid; none sends the person's Requests to the Director"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The completed record",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "person"
+                                                    ],
+                                                    "properties": {
+                                                        "person": {
+                                                            "$ref": "#/components/schemas/Person"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The caller is not an HR officer",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such account",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "A field is missing or wrong, the Regime starts after the start date, the RUT is someone else's, or the account already has its record",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/people/{rut}": {
+            "get": {
+                "operationId": "api-person",
+                "summary": "One person's record, by RUT, with their Regime lines and the record's trail: the caller's own, or anyone's for an HR officer",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "rut",
+                        "in": "path",
+                        "description": "The person's RUT with its verifier digit, with or without dots",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The record",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "person"
+                                                    ],
+                                                    "properties": {
+                                                        "person": {
+                                                            "$ref": "#/components/schemas/Person"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No record has that RUT, or it is not the caller's to read",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/people/{rut}/regimes": {
+            "post": {
+                "operationId": "api-change-regime",
+                "summary": "«Cambiar régimen»: a new dated Regime line with its reason; the earlier lines stay",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "regime",
+                                    "from",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "regime": {
+                                        "type": "string",
+                                        "enum": [
+                                            "estatutoAps",
+                                            "honorarios"
+                                        ],
+                                        "description": "The new Regime"
+                                    },
+                                    "from": {
+                                        "type": "string",
+                                        "description": "The date it applies from, YYYY-MM-DD"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "Why, for the record's trail"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "rut",
+                        "in": "path",
+                        "description": "The person's RUT with its verifier digit, with or without dots",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The record with its new line",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "person"
+                                                    ],
+                                                    "properties": {
+                                                        "person": {
+                                                            "$ref": "#/components/schemas/Person"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The caller is not an HR officer",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No record has that RUT",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "A field is missing or wrong, the date is before the first line, the Regime is already the one in force then, or a line already starts on that date",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "tags": [
         {
             "name": "api",
-            "description": "«Recursos Humanos» over OCS: API v1, the one its own pages read and outside systems use (recursos-humanos#1, API contract). v1 only grows; a change that would break callers ships as v2 beside it. Consumers send `OCS-APIRequest: true`, which is also the CSRF protection, and get the OCS envelope back; a session or a Nextcloud app password signs them in. Every route is attribute-routed, open to any signed-in person and rate-limited (MetadataTest holds all three); who may see what is checked inside each action, through Access."
+            "description": "«Recursos Humanos» over OCS: API v1, the one its own pages read and outside systems use (recursos-humanos#1, API contract). v1 only grows; a change that would break callers ships as v2 beside it. Consumers send `OCS-APIRequest: true`, which is also the CSRF protection, and get the OCS envelope back; a session or a Nextcloud app password signs them in. Every route is attribute-routed, open to any signed-in person and rate-limited (MetadataTest holds all three); who may see what is checked inside each action, through Access. A refusal answers aps-common's client error shape, `{message}`, with the Spanish reason the screens show."
         }
     ]
 }
