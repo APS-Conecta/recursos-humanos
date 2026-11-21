@@ -28,9 +28,19 @@ class Access {
 	/** @return array{hrOfficer: bool, director: bool, subdirector: bool} */
 	public function rolesOf(string $uid): array {
 		return [
-			'hrOfficer' => $this->groups->isInGroup($uid, self::HR_OFFICER_GROUP),
+			'hrOfficer' => $this->writes($uid),
 			'director' => $this->groups->isInGroup($uid, self::DIRECTOR_GROUP),
 			'subdirector' => $this->groups->isInGroup($uid, self::SUBDIRECTOR_GROUP),
 		];
+	}
+
+	/** Whether $viewer reads every person's record, not only their own: the HR officers. */
+	public function readsEveryone(string $viewer): bool {
+		return $this->writes($viewer);
+	}
+
+	/** Whether $viewer writes person records: only HR does. */
+	public function writes(string $viewer): bool {
+		return $this->groups->isInGroup($viewer, self::HR_OFFICER_GROUP);
 	}
 }

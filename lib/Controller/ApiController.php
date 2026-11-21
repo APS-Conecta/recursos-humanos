@@ -8,6 +8,11 @@ namespace OCA\RecursosHumanos\Controller;
 
 use OCA\RecursosHumanos\Access\Access;
 use OCA\RecursosHumanos\AppInfo\Application;
+use OCA\RecursosHumanos\Forbidden;
+use OCA\RecursosHumanos\People\People;
+use OCA\RecursosHumanos\Refused;
+use OCA\RecursosHumanos\ResponseDefinitions;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -23,17 +28,24 @@ use OCP\IRequest;
  * v2 beside it. Consumers send `OCS-APIRequest: true`, which is also the CSRF protection, and get
  * the OCS envelope back; a session or a Nextcloud app password signs them in. Every route is
  * attribute-routed, open to any signed-in person and rate-limited (MetadataTest holds all three);
- * who may see what is checked inside each action, through Access.
+ * who may see what is checked inside each action, through Access. A refusal answers
+ * aps-common's client error shape, `{message}`, with the Spanish reason the screens show.
+ *
+ * @psalm-import-type RecursosHumanosPerson from ResponseDefinitions
+ * @psalm-import-type RecursosHumanosPersonItem from ResponseDefinitions
  */
 #[OpenAPI(scope: OpenAPI::SCOPE_DEFAULT)]
 class ApiController extends OCSController {
 	/** Reads: a ceiling against a runaway client, not a quota. */
 	private const READ_LIMIT = 120;
+	/** Writes: a ceiling against a runaway client. */
+	private const WRITE_LIMIT = 30;
 	private const PERIOD = 60;
 
 	public function __construct(
 		IRequest $request,
 		private Access $access,
+		private People $people,
 		private ?string $userId,
 	) {
 		parent::__construct(Application::APP_ID, $request);
@@ -52,5 +64,105 @@ class ApiController extends OCSController {
 	public function me(): DataResponse {
 		$uid = (string)$this->userId;
 		return new DataResponse(['uid' => $uid, 'roles' => $this->access->rolesOf($uid)]);
+	}
+
+	/**
+	 * «Personal»: every account with its person record, sorted by name, those without one marked
+	 * incomplete («Falta completar»); anyone but an HR officer gets only their own
+	 *
+	 * @return DataResponse<Http::STATUS_OK, array{people: list<RecursosHumanosPersonItem>}, array{}>
+	 *
+	 * 200: The people the caller may see
+	 */
+	#[NoAdminRequired]
+	#[UserRateLimit(limit: self::READ_LIMIT, period: self::PERIOD)]
+	#[ApiRoute(verb: 'GET', url: '/api/v1/people')]
+	public function people(): DataResponse {
+		return new DataResponse(['people' => $this->people->listFor((string)$this->userId)]);
+	}
+
+	/**
+	 * One person's record, by RUT, with their Regime lines and the record's trail: the caller's
+	 * own, or anyone's for an HR officer
+	 *
+	 * @param string $rut The person's RUT with its verifier digit, with or without dots
+	 * @return DataResponse<Http::STATUS_OK, array{person: RecursosHumanosPerson}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{message: string}, array{}>
+	 *
+	 * 200: The record
+	 * 404: No record has that RUT, or it is not the caller's to read
+	 */
+	#[NoAdminRequired]
+	#[UserRateLimit(limit: self::READ_LIMIT, period: self::PERIOD)]
+	#[ApiRoute(verb: 'GET', url: '/api/v1/people/{rut}')]
+	public function person(string $rut): DataResponse {
+		return $this->answer(fn (): array => $this->people->one((string)$this->userId, $rut));
+	}
+
+	/**
+	 * «Completar ficha»: an HR officer writes the record of an account that has none, with its first Regime line
+	 *
+	 * @param string $uid The account's uid
+	 * @param string $rut The RUT with its verifier digit, with or without dots; unique in the establishment
+	 * @param string $givenNames The legal nombres
+	 * @param string $surnames The legal apellidos
+	 * @param string $startDate The start date, YYYY-MM-DD
+	 * @param 'estatutoAps'|'honorarios' $regime The Regime
+	 * @param string $regimeFrom The date the Regime applies from, YYYY-MM-DD
+	 * @param int $priorMonths Prior public service, in months
+	 * @param bool $shift Whether the person works shifts
+	 * @param string|null $jefatura The Jefatura's uid; none sends the person's Requests to the Director
+	 * @return DataResponse<Http::STATUS_CREATED, array{person: RecursosHumanosPerson}, array{}>|DataResponse<Http::STATUS_FORBIDDEN|Http::STATUS_NOT_FOUND|Http::STATUS_UNPROCESSABLE_ENTITY, array{message: string}, array{}>
+	 *
+	 * 201: The completed record
+	 * 403: The caller is not an HR officer
+	 * 404: No such account
+	 * 422: A field is missing or wrong, the RUT is someone else's, or the account already has its record
+	 */
+	#[NoAdminRequired]
+	#[UserRateLimit(limit: self::WRITE_LIMIT, period: self::PERIOD)]
+	#[ApiRoute(verb: 'POST', url: '/api/v1/people')]
+	public function completeRecord(string $uid, string $rut, string $givenNames, string $surnames, string $startDate, string $regime,
+		string $regimeFrom, int $priorMonths = 0, bool $shift = false, ?string $jefatura = null): DataResponse {
+		return $this->answer(fn (): array => $this->people->complete((string)$this->userId, $uid, $rut, $givenNames, $surnames, $startDate,
+			$priorMonths, $shift, $jefatura, $regime, $regimeFrom), Http::STATUS_CREATED);
+	}
+
+	/**
+	 * «Cambiar régimen»: a new dated Regime line with its reason; the earlier lines stay
+	 *
+	 * @param string $rut The person's RUT with its verifier digit, with or without dots
+	 * @param 'estatutoAps'|'honorarios' $regime The new Regime
+	 * @param string $from The date it applies from, YYYY-MM-DD
+	 * @param string $reason Why, for the record's trail
+	 * @return DataResponse<Http::STATUS_CREATED, array{person: RecursosHumanosPerson}, array{}>|DataResponse<Http::STATUS_FORBIDDEN|Http::STATUS_NOT_FOUND|Http::STATUS_UNPROCESSABLE_ENTITY, array{message: string}, array{}>
+	 *
+	 * 201: The record with its new line
+	 * 403: The caller is not an HR officer
+	 * 404: No record has that RUT
+	 * 422: A field is missing or wrong, or a line already starts on that date
+	 */
+	#[NoAdminRequired]
+	#[UserRateLimit(limit: self::WRITE_LIMIT, period: self::PERIOD)]
+	#[ApiRoute(verb: 'POST', url: '/api/v1/people/{rut}/regimes')]
+	public function changeRegime(string $rut, string $regime, string $from, string $reason): DataResponse {
+		return $this->answer(fn (): array => $this->people->changeRegime((string)$this->userId, $rut, $regime, $from, $reason), Http::STATUS_CREATED);
+	}
+
+	/**
+	 * The person record $action answers, or the refusal it threw as aps-common's `{message}`.
+	 *
+	 * @param callable(): RecursosHumanosPerson $action
+	 * @return DataResponse<Http::STATUS_OK|Http::STATUS_CREATED, array{person: RecursosHumanosPerson}, array{}>|DataResponse<Http::STATUS_FORBIDDEN|Http::STATUS_NOT_FOUND|Http::STATUS_UNPROCESSABLE_ENTITY, array{message: string}, array{}>
+	 */
+	private function answer(callable $action, int $status = Http::STATUS_OK): DataResponse {
+		try {
+			return new DataResponse(['person' => $action()], $status);
+		} catch (Forbidden $e) {
+			return new DataResponse(['message' => $e->getMessage()], Http::STATUS_FORBIDDEN);
+		} catch (DoesNotExistException $e) {
+			return new DataResponse(['message' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+		} catch (Refused $e) {
+			return new DataResponse(['message' => $e->getMessage()], Http::STATUS_UNPROCESSABLE_ENTITY);
+		}
 	}
 }

@@ -63,17 +63,24 @@ abstract class SeamTestCase extends TestCase {
 	}
 
 	/**
-	 * An OCS call as the person (null: no credentials), answered as {status, data}.
+	 * An OCS call as the person (null: no credentials), with a JSON body when one is given,
+	 * answered as {status, data}.
 	 *
+	 * @param array<string, mixed>|null $body
 	 * @return array{status: int, data: mixed}
 	 */
-	protected static function ocs(?string $person, string $method, string $path): array {
+	protected static function ocs(?string $person, string $method, string $path, ?array $body = null): array {
 		$curl = curl_init(self::BASE . $path);
+		$headers = ['OCS-APIRequest: true', 'Accept: application/json'];
+		if ($body !== null) {
+			$headers[] = 'Content-Type: application/json';
+			curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($body, JSON_THROW_ON_ERROR));
+		}
 		curl_setopt_array($curl, [
 			CURLOPT_CUSTOMREQUEST => $method,
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_TIMEOUT => 60,
-			CURLOPT_HTTPHEADER => ['OCS-APIRequest: true', 'Accept: application/json'],
+			CURLOPT_HTTPHEADER => $headers,
 		]);
 		if ($person !== null) {
 			curl_setopt($curl, CURLOPT_USERPWD, $person . ':' . self::$people[$person]);
