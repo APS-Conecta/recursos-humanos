@@ -6,6 +6,9 @@ export const REGIMES = {
 	honorarios: 'Honorarios / sin derecho',
 }
 
+/** A person's cargos on one line. */
+export const cargoLine = (cargos) => cargos.join(' · ')
+
 /** 12345678-5 as people write it: 12.345.678-5. */
 export function dottedRut(rut) {
 	const [body, verifier] = rut.split('-')

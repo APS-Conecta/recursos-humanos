@@ -116,7 +116,7 @@ class ApiController extends OCSController {
 	 * 201: The completed record
 	 * 403: The caller is not an HR officer
 	 * 404: No such account
-	 * 422: A field is missing or wrong, the RUT is someone else's, or the account already has its record
+	 * 422: A field is missing or wrong, the Regime starts after the start date, the RUT is someone else's, or the account already has its record
 	 */
 	#[NoAdminRequired]
 	#[UserRateLimit(limit: self::WRITE_LIMIT, period: self::PERIOD)]
@@ -124,7 +124,7 @@ class ApiController extends OCSController {
 	public function completeRecord(string $uid, string $rut, string $givenNames, string $surnames, string $startDate, string $regime,
 		string $regimeFrom, int $priorMonths = 0, bool $shift = false, ?string $jefatura = null): DataResponse {
 		return $this->answer(fn (): array => $this->people->complete((string)$this->userId, $uid, $rut, $givenNames, $surnames, $startDate,
-			$priorMonths, $shift, $jefatura, $regime, $regimeFrom), Http::STATUS_CREATED);
+			$regime, $regimeFrom, $priorMonths, $shift, $jefatura), Http::STATUS_CREATED);
 	}
 
 	/**
@@ -139,7 +139,7 @@ class ApiController extends OCSController {
 	 * 201: The record with its new line
 	 * 403: The caller is not an HR officer
 	 * 404: No record has that RUT
-	 * 422: A field is missing or wrong, or a line already starts on that date
+	 * 422: A field is missing or wrong, the date is before the first line, the Regime is already the one in force then, or a line already starts on that date
 	 */
 	#[NoAdminRequired]
 	#[UserRateLimit(limit: self::WRITE_LIMIT, period: self::PERIOD)]

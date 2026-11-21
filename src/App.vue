@@ -126,4 +126,13 @@ export default {
 	min-height: var(--default-clickable-area);
 	margin: var(--app-navigation-padding) 0 0;
 }
+
+/* Every page's quieter text, and numbers that line up in a column. */
+.rh-hint {
+	color: var(--color-text-maxcontrast);
+}
+
+.rh-number {
+	font-variant-numeric: tabular-nums;
+}
 </style>

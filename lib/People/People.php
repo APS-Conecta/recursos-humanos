@@ -24,16 +24,15 @@ use OCP\AppFramework\Db\TTransactional;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\DB\Exception;
 use OCP\IDBConnection;
-use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
 
 /**
  * People (recursos-humanos#1, People): the person record and its «Falta completar» state.
  *
- * - **Every account** is in «Personal»; one without a record is «Falta completar» until HR
- *   completes it. A retired (disabled) account stays listed while it has a record, and a record
- *   outlives its account: nothing is ever deleted.
+ * - **Every enabled account** is in «Personal»; one without a record is «Falta completar» until HR
+ *   completes it. A retired (disabled) account stays listed only while it has a record, and a
+ *   record outlives its account: nothing is ever deleted.
  * - **The RUT keys the record** (ADR 0006): checked by its verifier digit and unique in the
  *   establishment, with the legal nombre y apellidos.
  * - **A Regime change is a new dated line**; the earlier ones stay.
@@ -51,8 +50,6 @@ class People {
 	/** The trail's kinds of step. */
 	private const COMPLETED = 'completed';
 	private const REGIME = 'regime';
-	/** The cargo groups the Provisionador creates (gestion-aio teams.py) are role-<cargo>. */
-	private const CARGO_GROUP = 'role-';
 	/** The establishment's day, as the Year close reads it (recursos-humanos#1, Limits). */
 	private const ZONE = 'America/Santiago';
 	/** The columns' length. */
@@ -70,6 +67,9 @@ class People {
 	private const REGIME_KIND = 'Elige el régimen: Estatuto APS u Honorarios / sin derecho.';
 	private const REGIME_FROM = 'Elige la fecha desde la que rige el régimen.';
 	private const SAME_DATE = 'Ya hay un régimen desde esa fecha.';
+	private const AFTER_START = 'El régimen debe regir desde la fecha de ingreso o antes.';
+	private const BEFORE_FIRST = 'Esa fecha es anterior al primer régimen de la ficha.';
+	private const SAME_REGIME = 'Ese ya es su régimen en esa fecha.';
 	private const REASON = 'Escribe el motivo: queda en el recorrido de la ficha.';
 	private const NO_JEFATURA = 'Esa jefatura no es una cuenta del establecimiento.';
 	private const OWN_JEFATURA = 'Una persona no puede ser su propia jefatura.';
@@ -80,7 +80,6 @@ class People {
 		private PersonLogMapper $log,
 		private Access $access,
 		private IUserManager $users,
-		private IGroupManager $groups,
 		private ITimeFactory $time,
 		private IDBConnection $db,
 	) {
@@ -142,7 +141,7 @@ class People {
 	 * @throws Refused a field is missing or wrong, the RUT is someone else's, or the record exists
 	 */
 	public function complete(string $actor, string $uid, string $rut, string $givenNames, string $surnames, string $startDate,
-		int $priorMonths, bool $shift, ?string $jefatura, string $regime, string $regimeFrom): array {
+		string $regime, string $regimeFrom, int $priorMonths, bool $shift, ?string $jefatura): array {
 		$this->mustWrite($actor);
 		if (!$this->users->userExists($uid)) {
 			throw new DoesNotExistException(self::NO_ACCOUNT);
@@ -164,6 +163,9 @@ class People {
 		$person->setShift($shift);
 		$person->setJefatura($this->jefatura($uid, $jefatura));
 		$line = $this->line($uid, $regime, $regimeFrom);
+		if ($line->getStartsOn() > $person->getStartDate()) {
+			throw new Refused(self::AFTER_START);
+		}
 
 		try {
 			$this->atomic(function () use ($person, $line, $actor): void {
@@ -182,17 +184,26 @@ class People {
 	}
 
 	/**
-	 * «Cambiar régimen»: a new dated Regime line with its reason; the earlier lines stay.
+	 * «Cambiar régimen»: a new dated Regime line with its reason; the earlier lines stay. A date
+	 * before the first line corrects the record and belongs to the Recount (recursos-humanos#18).
 	 *
 	 * @return RecursosHumanosPerson
 	 * @throws Forbidden not an HR officer
 	 * @throws DoesNotExistException no such RUT
-	 * @throws Refused a field is missing or wrong, or a line already starts on that date
+	 * @throws Refused a field is missing or wrong, the date is before the first line, the Regime
+	 *                 is already the one in force then, or a line already starts on that date
 	 */
 	public function changeRegime(string $actor, string $rut, string $regime, string $from, string $reason): array {
 		$this->mustWrite($actor);
 		$person = $this->visible($actor, $rut);
 		$line = $this->line($person->getUid(), $regime, $from);
+		$current = $this->regimeOn($this->regimes->of($person->getUid()), $line->getStartsOn());
+		if ($current === null) {
+			throw new Refused(self::BEFORE_FIRST);
+		}
+		if ($current === $line->getRegime()) {
+			throw new Refused(self::SAME_REGIME);
+		}
 		$reason = trim($reason);
 		if ($reason === '') {
 			throw new Refused(self::REASON);
@@ -249,36 +260,33 @@ class People {
 	 * @return RecursosHumanosPersonItem
 	 */
 	private function item(string $uid, ?IUser $user, ?Person $person, array $lines, string $today): array {
-		$regime = null;
-		foreach ($lines as $line) {
-			if ($line->getStartsOn() <= $today) {
-				$regime = $line->getRegime();
-			}
-		}
 		$jefatura = $person?->getJefatura();
 		return [
 			'uid' => $uid,
 			'name' => $user?->getDisplayName() ?? $person?->getGivenNames() . ' ' . $person?->getSurnames(),
-			'cargos' => $user === null ? [] : $this->cargosOf($user),
+			'cargos' => $user === null ? [] : $this->access->cargosOf($user),
 			'complete' => $person !== null,
 			'rut' => $person?->getRut(),
 			'givenNames' => $person?->getGivenNames(),
 			'surnames' => $person?->getSurnames(),
-			'regime' => $regime,
+			'regime' => $this->regimeOn($lines, $today),
 			'jefatura' => $jefatura === null ? null : $this->account($jefatura),
 		];
 	}
 
-	/** @return list<string> the names of the person's cargo groups */
-	private function cargosOf(IUser $user): array {
-		$cargos = [];
-		foreach ($this->groups->getUserGroups($user) as $group) {
-			if (str_starts_with($group->getGID(), self::CARGO_GROUP)) {
-				$cargos[] = $group->getDisplayName();
+	/**
+	 * The Regime in force on $day: the latest line starting on or before it; null before the first.
+	 *
+	 * @param list<RegimeLine> $lines oldest first
+	 */
+	private function regimeOn(array $lines, string $day): ?string {
+		$regime = null;
+		foreach ($lines as $line) {
+			if ($line->getStartsOn() <= $day) {
+				$regime = $line->getRegime();
 			}
 		}
-		sort($cargos);
-		return $cargos;
+		return $regime;
 	}
 
 	/** @return RecursosHumanosAccount */

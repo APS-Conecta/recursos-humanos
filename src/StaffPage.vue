@@ -31,7 +31,7 @@
 							<td>
 								<div>{{ person.name }}</div>
 								<div v-if="person.cargos.length > 0" class="rh-hint">
-									{{ person.cargos.join(' · ') }}
+									{{ cargoLine(person.cargos) }}
 								</div>
 								<NcChip v-if="!person.complete" text="Falta completar" variant="warning" no-close />
 							</td>
@@ -70,7 +70,7 @@ import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import { ocsGet } from './api.js'
 import { textMatches } from './aps/filters.js'
-import { REGIMES, dottedRut } from './people.js'
+import { REGIMES, cargoLine, dottedRut } from './people.js'
 
 /** «Personal» for HR (recursos-humanos#3): every account and its record, searched by name, RUT or cargo. */
 export default {
@@ -83,7 +83,7 @@ export default {
 		version: { type: Number, default: 0 },
 	},
 	emits: ['open', 'loaded'],
-	setup: () => ({ REGIMES, dottedRut }),
+	setup: () => ({ REGIMES, cargoLine, dottedRut }),
 	data: () => ({ state: 'loading', people: [], query: '' }),
 	computed: {
 		shown() {
@@ -119,10 +119,6 @@ export default {
 </script>
 
 <style scoped>
-.rh-hint {
-	color: var(--color-text-maxcontrast);
-}
-
 .rh-search {
 	max-width: 340px;
 	margin-block: calc(var(--default-grid-baseline) * 2);
@@ -156,7 +152,6 @@ export default {
 }
 
 .rh-number {
-	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
 }
 </style>

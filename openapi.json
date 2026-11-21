@@ -652,7 +652,7 @@
                         }
                     },
                     "422": {
-                        "description": "A field is missing or wrong, the RUT is someone else's, or the account already has its record",
+                        "description": "A field is missing or wrong, the Regime starts after the start date, the RUT is someone else's, or the account already has its record",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1049,7 +1049,7 @@
                         }
                     },
                     "422": {
-                        "description": "A field is missing or wrong, or a line already starts on that date",
+                        "description": "A field is missing or wrong, the date is before the first line, the Regime is already the one in force then, or a line already starts on that date",
                         "content": {
                             "application/json": {
                                 "schema": {

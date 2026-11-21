@@ -99,6 +99,7 @@ class PeopleTest extends SeamTestCase {
 			'negative prior service' => [['priorMonths' => -1], 'El servicio público anterior va en meses: un número entero desde 0.'],
 			'no Regime' => [['regime' => 'contrata'], 'Elige el régimen: Estatuto APS u Honorarios / sin derecho.'],
 			'no Regime date' => [['regimeFrom' => ''], 'Elige la fecha desde la que rige el régimen.'],
+			'a Regime from after the start date' => [['regimeFrom' => '2019-03-05'], 'El régimen debe regir desde la fecha de ingreso o antes.'],
 			'an unknown Jefatura' => [['jefatura' => 'nobody-' . bin2hex(random_bytes(4))], 'Esa jefatura no es una cuenta del establecimiento.'],
 		];
 	}
@@ -135,7 +136,9 @@ class PeopleTest extends SeamTestCase {
 	public function testARegimeChangeIsANewDatedLineAndTheEarlierLinesStay(): void {
 		$staff = self::person();
 		$rut = self::rut();
-		self::ocs(self::$officer, 'POST', self::PEOPLE, self::record($staff, ['rut' => $rut, 'regime' => 'honorarios', 'regimeFrom' => '2024-01-02']));
+		// The mockup's «Javiera Morales»: on honorarios before her start date under the Estatuto APS.
+		self::ocs(self::$officer, 'POST', self::PEOPLE, self::record($staff,
+			['rut' => $rut, 'startDate' => '2025-07-01', 'regime' => 'honorarios', 'regimeFrom' => '2024-01-02']));
 
 		$answer = self::ocs(self::$officer, 'POST', self::PEOPLE . "/$rut/regimes",
 			['regime' => 'estatutoAps', 'from' => '2025-07-01', 'reason' => 'Decreto de nombramiento N° 845.']);
@@ -152,14 +155,14 @@ class PeopleTest extends SeamTestCase {
 	public function testARegimeLineInTheFutureIsNotYetInForce(): void {
 		$staff = self::person();
 		$rut = self::rut();
-		self::ocs(self::$officer, 'POST', self::PEOPLE, self::record($staff, ['rut' => $rut, 'regime' => 'honorarios', 'regimeFrom' => '2024-01-02']));
+		self::ocs(self::$officer, 'POST', self::PEOPLE, self::record($staff, ['rut' => $rut, 'regime' => 'honorarios']));
 
 		self::ocs(self::$officer, 'POST', self::PEOPLE . "/$rut/regimes", ['regime' => 'estatutoAps', 'from' => '2099-01-01', 'reason' => 'Nombramiento futuro.']);
 
 		self::assertSame('honorarios', self::entry(self::$officer, $staff)['regime']);
 	}
 
-	public function testARegimeChangeNeedsAReasonAndItsOwnDate(): void {
+	public function testARegimeChangeNeedsAReasonADifferentRegimeAndAnAvailableDate(): void {
 		$staff = self::person();
 		$rut = self::rut();
 		self::ocs(self::$officer, 'POST', self::PEOPLE, self::record($staff, ['rut' => $rut]));
@@ -167,9 +170,13 @@ class PeopleTest extends SeamTestCase {
 
 		$noReason = self::ocs(self::$officer, 'POST', $path, ['regime' => 'honorarios', 'from' => '2025-01-01', 'reason' => ' ']);
 		$sameDate = self::ocs(self::$officer, 'POST', $path, ['regime' => 'honorarios', 'from' => '2019-03-04', 'reason' => 'Cambio de contrato.']);
+		$sameRegime = self::ocs(self::$officer, 'POST', $path, ['regime' => 'estatutoAps', 'from' => '2025-01-01', 'reason' => 'Cambio de contrato.']);
+		$beforeFirst = self::ocs(self::$officer, 'POST', $path, ['regime' => 'honorarios', 'from' => '2019-03-03', 'reason' => 'Cambio de contrato.']);
 
 		self::assertSame([422, 'Escribe el motivo: queda en el recorrido de la ficha.'], [$noReason['status'], $noReason['data']['message']]);
 		self::assertSame([422, 'Ya hay un régimen desde esa fecha.'], [$sameDate['status'], $sameDate['data']['message']]);
+		self::assertSame([422, 'Ese ya es su régimen en esa fecha.'], [$sameRegime['status'], $sameRegime['data']['message']]);
+		self::assertSame([422, 'Esa fecha es anterior al primer régimen de la ficha.'], [$beforeFirst['status'], $beforeFirst['data']['message']], 'correcting it is the Recount\'s');
 		self::assertCount(1, self::ocs(self::$officer, 'GET', self::PEOPLE . '/' . $rut)['data']['person']['regimes']);
 	}
 

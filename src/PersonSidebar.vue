@@ -158,7 +158,7 @@ import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import { ocsGet, ocsPost, refusal } from './api.js'
-import { REGIMES, asDate, asDay, dottedRut, longDay, stamp } from './people.js'
+import { REGIMES, asDate, asDay, cargoLine, dottedRut, longDay, stamp } from './people.js'
 
 const TITLES = { complete: 'Completar ficha', regime: 'Cambiar régimen' }
 
@@ -200,10 +200,10 @@ export default {
 			return this.form ? `${TITLES[this.form]} · ${this.entry.name}` : this.entry.name
 		},
 		subname() {
-			return [this.entry.cargos.join(' · '), this.entry.rut && `RUT ${dottedRut(this.entry.rut)}`].filter(Boolean).join(' · ')
+			return [cargoLine(this.entry.cargos), this.entry.rut && `RUT ${dottedRut(this.entry.rut)}`].filter(Boolean).join(' · ')
 		},
 		cargo() {
-			const cargo = this.entry.cargos.join(' · ') || '—'
+			const cargo = cargoLine(this.entry.cargos) || '—'
 			return this.person.shift ? `${cargo} · trabaja en turnos (el feriado legal se cuenta de lunes a viernes)` : cargo
 		},
 		jefaturas() {
@@ -293,10 +293,6 @@ export default {
 	margin-block: calc(var(--default-grid-baseline) * 3);
 }
 
-.rh-hint {
-	color: var(--color-text-maxcontrast);
-}
-
 /* Label above value, whatever Nextcloud's own dl styles say. */
 .rh-record dt,
 .rh-record dd {
@@ -317,10 +313,6 @@ export default {
 	margin-block: calc(var(--default-grid-baseline) * 4) calc(var(--default-grid-baseline) * 2);
 	font-size: var(--default-font-size);
 	font-weight: bold;
-}
-
-.rh-number {
-	font-variant-numeric: tabular-nums;
 }
 
 .rh-trail {
