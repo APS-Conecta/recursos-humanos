@@ -42,6 +42,8 @@ GROUPS := role-recursos-humanos role-director-cesfam role-subdirector-jefe-tecni
 instance-up:
 	$(COMPOSE) up -d --wait
 	for g in $(GROUPS); do $(OCC) group:add $$g >/dev/null 2>&1 || true; done
+	# Its welcome modal covers every page a browser check opens.
+	$(OCC) app:disable firstrunwizard >/dev/null
 	$(OCC) app:enable recursos_humanos
 	# Restart AFTER enabling: the web workers cache the route collection and the enabled apps
 	# in APCu, and occ cannot invalidate it (Estadística's Makefile, farmacia d4b7e43).

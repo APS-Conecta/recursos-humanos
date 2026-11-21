@@ -110,4 +110,43 @@ class MetadataTest extends TestCase {
 			self::assertCount(1, $method->getAttributes(UserRateLimit::class), "$name must carry #[UserRateLimit]");
 		}
 	}
+
+	/**
+	 * The contract outside systems read (recursos-humanos#1, API contract) says what the routes do:
+	 * an enum's default is one of its values, and a route with a body names the fields it needs. A
+	 * parameter given a PHP default to dodge a missing field otherwise reaches openapi.json as
+	 * optional, with a default no caller may send (rh#3's first cut).
+	 */
+	public function testTheOpenApiContractNamesRequiredFieldsAndValidDefaults(): void {
+		$spec = $this->json('openapi.json');
+
+		$schemas = [];
+		$collect = static function (array $node, string $at) use (&$collect, &$schemas): void {
+			if (isset($node['enum']) && array_key_exists('default', $node)) {
+				$schemas[$at] = $node;
+			}
+			foreach ($node as $key => $child) {
+				if (is_array($child)) {
+					$collect($child, "$at/$key");
+				}
+			}
+		};
+		$collect($spec, '');
+		foreach ($schemas as $at => $schema) {
+			$allowed = ($schema['nullable'] ?? false) ? [...$schema['enum'], null] : $schema['enum'];
+			self::assertContains($schema['default'], $allowed, "$at: the default is not one of its enum values");
+		}
+
+		$bodies = 0;
+		foreach ($spec['paths'] as $path => $operations) {
+			foreach ($operations as $verb => $operation) {
+				$body = $operation['requestBody']['content']['application/json']['schema'] ?? null;
+				if (is_array($operation) && $body !== null) {
+					$bodies++;
+					self::assertNotEmpty($body['required'] ?? [], strtoupper($verb) . " $path takes a body but requires none of its fields");
+				}
+			}
+		}
+		self::assertGreaterThan(0, $bodies, 'openapi.json has routes with a body to check');
+	}
 }
