@@ -7,7 +7,6 @@ declare(strict_types=1);
 namespace OCA\RecursosHumanos\People;
 
 use APS\Common\Text;
-use DateTimeImmutable;
 use DateTimeZone;
 use OCA\RecursosHumanos\Access\Access;
 use OCA\RecursosHumanos\Db\Person;
@@ -16,6 +15,7 @@ use OCA\RecursosHumanos\Db\PersonLogMapper;
 use OCA\RecursosHumanos\Db\PersonMapper;
 use OCA\RecursosHumanos\Db\RegimeLine;
 use OCA\RecursosHumanos\Db\RegimeLineMapper;
+use OCA\RecursosHumanos\Day;
 use OCA\RecursosHumanos\Forbidden;
 use OCA\RecursosHumanos\Refused;
 use OCA\RecursosHumanos\ResponseDefinitions;
@@ -156,7 +156,7 @@ class People {
 		$person->setGivenNames($this->name($givenNames));
 		$person->setSurnames($this->name($surnames));
 		$person->setRut(Rut::canonical($rut));
-		$person->setStartDate($this->date($startDate, self::START));
+		$person->setStartDate(Day::of($startDate, self::START)->format('Y-m-d'));
 		if ($priorMonths < 0) {
 			throw new Refused(self::PRIOR);
 		}
@@ -325,7 +325,7 @@ class People {
 		$line = new RegimeLine();
 		$line->setUid($uid);
 		$line->setRegime((Regime::tryFrom($regime) ?? throw new Refused(self::REGIME_KIND))->value);
-		$line->setStartsOn($this->date($from, self::REGIME_FROM));
+		$line->setStartsOn(Day::of($from, self::REGIME_FROM)->format('Y-m-d'));
 		return $line;
 	}
 
@@ -339,15 +339,6 @@ class People {
 			throw new Refused(self::LONG_NAMES);
 		}
 		return $name;
-	}
-
-	/** @throws Refused */
-	private function date(string $typed, string $refusal): string {
-		$date = DateTimeImmutable::createFromFormat('!Y-m-d', $typed);
-		if ($date === false || $date->format('Y-m-d') !== $typed) {
-			throw new Refused($refusal);
-		}
-		return $typed;
 	}
 
 	/** @throws Refused */

@@ -5,8 +5,8 @@ import { generateOcsUrl } from '@nextcloud/router'
  * The pages read «Recursos Humanos»' own OCS API v1 (ApiController). @nextcloud/axios sends the
  * session's request token, and the payload sits inside the OCS envelope.
  */
-export async function ocsGet(path) {
-	const { data } = await axios.get(generateOcsUrl(`/apps/recursos_humanos/api/v1/${path}`))
+export async function ocsGet(path, params = {}) {
+	const { data } = await axios.get(generateOcsUrl(`/apps/recursos_humanos/api/v1/${path}`), { params })
 	return data.ocs.data
 }
 

@@ -158,7 +158,8 @@ import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import { ocsGet, ocsPost, refusal } from './api.js'
-import { REGIMES, asDate, asDay, cargoLine, dottedRut, longDay, stamp } from './people.js'
+import { asDate, asDay, longDay } from './days.js'
+import { REGIMES, cargoLine, dottedRut, stamp } from './people.js'
 
 const TITLES = { complete: 'Completar ficha', regime: 'Cambiar régimen' }
 

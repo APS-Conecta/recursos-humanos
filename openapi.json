@@ -35,6 +35,54 @@
                     }
                 }
             },
+            "Count": {
+                "type": "object",
+                "required": [
+                    "days",
+                    "counted",
+                    "skipped",
+                    "years"
+                ],
+                "properties": {
+                    "days": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "counted": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "skipped": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SkippedDay"
+                        }
+                    },
+                    "years": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/YearCount"
+                        }
+                    }
+                }
+            },
+            "Holiday": {
+                "type": "object",
+                "required": [
+                    "date",
+                    "name"
+                ],
+                "properties": {
+                    "date": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            },
             "OCSMeta": {
                 "type": "object",
                 "required": [
@@ -178,6 +226,30 @@
                     }
                 }
             },
+            "SkippedDay": {
+                "type": "object",
+                "required": [
+                    "date",
+                    "reason",
+                    "name"
+                ],
+                "properties": {
+                    "date": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "enum": [
+                            "weekend",
+                            "holiday"
+                        ]
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                }
+            },
             "TrailStep": {
                 "type": "object",
                 "required": [
@@ -218,6 +290,23 @@
                     "reason": {
                         "type": "string",
                         "nullable": true
+                    }
+                }
+            },
+            "YearCount": {
+                "type": "object",
+                "required": [
+                    "year",
+                    "days"
+                ],
+                "properties": {
+                    "year": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "days": {
+                        "type": "number",
+                        "format": "double"
                     }
                 }
             }
@@ -1050,6 +1139,312 @@
                     },
                     "422": {
                         "description": "A field is missing or wrong, the date is before the first line, the Regime is already the one in force then, or a line already starts on that date",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/holidays": {
+            "get": {
+                "operationId": "api-holidays",
+                "summary": "The Public holidays of a year: the national list the app ships, by date",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "description": "The year",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The year's holidays",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "holidays"
+                                                    ],
+                                                    "properties": {
+                                                        "holidays": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/Holiday"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The app has no list for that year yet",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/requests/preview": {
+            "get": {
+                "operationId": "api-preview",
+                "summary": "A Request's count before it is sent, as «Nueva solicitud» shows it while the dates change: the days counted, the days skipped with their reason and holiday name, and the days per year; it writes nothing",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "The first day, YYYY-MM-DD",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "description": "The last day, YYYY-MM-DD, counted too",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "unit",
+                        "in": "query",
+                        "description": "días hábiles skip Saturdays, Sundays and Public holidays; días corridos count every day",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "habiles",
+                                "corridos"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The count",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "$ref": "#/components/schemas/Count"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "A date or the unit is missing or wrong, the range ends before it starts, or the app has no Public holiday list for one of its years",
                         "content": {
                             "application/json": {
                                 "schema": {

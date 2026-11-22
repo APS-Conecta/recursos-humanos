@@ -12,6 +12,7 @@ use OCA\RecursosHumanos\Forbidden;
 use OCA\RecursosHumanos\People\People;
 use OCA\RecursosHumanos\Refused;
 use OCA\RecursosHumanos\ResponseDefinitions;
+use OCA\RecursosHumanos\WorkingDays\WorkingDays;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -31,6 +32,8 @@ use OCP\IRequest;
  * who may see what is checked inside each action, through Access. A refusal answers
  * aps-common's client error shape, `{message}`, with the Spanish reason the screens show.
  *
+ * @psalm-import-type RecursosHumanosCount from ResponseDefinitions
+ * @psalm-import-type RecursosHumanosHoliday from ResponseDefinitions
  * @psalm-import-type RecursosHumanosPerson from ResponseDefinitions
  * @psalm-import-type RecursosHumanosPersonItem from ResponseDefinitions
  */
@@ -46,6 +49,7 @@ class ApiController extends OCSController {
 		IRequest $request,
 		private Access $access,
 		private People $people,
+		private WorkingDays $workingDays,
 		private ?string $userId,
 	) {
 		parent::__construct(Application::APP_ID, $request);
@@ -95,7 +99,7 @@ class ApiController extends OCSController {
 	#[UserRateLimit(limit: self::READ_LIMIT, period: self::PERIOD)]
 	#[ApiRoute(verb: 'GET', url: '/api/v1/people/{rut}')]
 	public function person(string $rut): DataResponse {
-		return $this->answer(fn (): array => $this->people->one((string)$this->userId, $rut));
+		return $this->answer(fn (): array => ['person' => $this->people->one((string)$this->userId, $rut)]);
 	}
 
 	/**
@@ -123,8 +127,8 @@ class ApiController extends OCSController {
 	#[ApiRoute(verb: 'POST', url: '/api/v1/people')]
 	public function completeRecord(string $uid, string $rut, string $givenNames, string $surnames, string $startDate, string $regime,
 		string $regimeFrom, int $priorMonths = 0, bool $shift = false, ?string $jefatura = null): DataResponse {
-		return $this->answer(fn (): array => $this->people->complete((string)$this->userId, $uid, $rut, $givenNames, $surnames, $startDate,
-			$regime, $regimeFrom, $priorMonths, $shift, $jefatura), Http::STATUS_CREATED);
+		return $this->answer(fn (): array => ['person' => $this->people->complete((string)$this->userId, $uid, $rut, $givenNames, $surnames,
+			$startDate, $regime, $regimeFrom, $priorMonths, $shift, $jefatura)], Http::STATUS_CREATED);
 	}
 
 	/**
@@ -145,18 +149,55 @@ class ApiController extends OCSController {
 	#[UserRateLimit(limit: self::WRITE_LIMIT, period: self::PERIOD)]
 	#[ApiRoute(verb: 'POST', url: '/api/v1/people/{rut}/regimes')]
 	public function changeRegime(string $rut, string $regime, string $from, string $reason): DataResponse {
-		return $this->answer(fn (): array => $this->people->changeRegime((string)$this->userId, $rut, $regime, $from, $reason), Http::STATUS_CREATED);
+		return $this->answer(fn (): array => ['person' => $this->people->changeRegime((string)$this->userId, $rut, $regime, $from, $reason)],
+			Http::STATUS_CREATED);
 	}
 
 	/**
-	 * The person record $action answers, or the refusal it threw as aps-common's `{message}`.
+	 * The Public holidays of a year: the national list the app ships, by date
 	 *
-	 * @param callable(): RecursosHumanosPerson $action
-	 * @return DataResponse<Http::STATUS_OK|Http::STATUS_CREATED, array{person: RecursosHumanosPerson}, array{}>|DataResponse<Http::STATUS_FORBIDDEN|Http::STATUS_NOT_FOUND|Http::STATUS_UNPROCESSABLE_ENTITY, array{message: string}, array{}>
+	 * @param int $year The year
+	 * @return DataResponse<Http::STATUS_OK, array{holidays: list<RecursosHumanosHoliday>}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{message: string}, array{}>
+	 *
+	 * 200: The year's holidays
+	 * 404: The app has no list for that year yet
+	 */
+	#[NoAdminRequired]
+	#[UserRateLimit(limit: self::READ_LIMIT, period: self::PERIOD)]
+	#[ApiRoute(verb: 'GET', url: '/api/v1/holidays')]
+	public function holidays(int $year): DataResponse {
+		return $this->answer(fn (): array => ['holidays' => $this->workingDays->holidays($year)]);
+	}
+
+	/**
+	 * A Request's count before it is sent, as «Nueva solicitud» shows it while the dates change: the
+	 * days counted, the days skipped with their reason and holiday name, and the days per year; it
+	 * writes nothing
+	 *
+	 * @param string $from The first day, YYYY-MM-DD
+	 * @param string $to The last day, YYYY-MM-DD, counted too
+	 * @param 'habiles'|'corridos' $unit días hábiles skip Saturdays, Sundays and Public holidays; días corridos count every day
+	 * @return DataResponse<Http::STATUS_OK, RecursosHumanosCount, array{}>|DataResponse<Http::STATUS_UNPROCESSABLE_ENTITY, array{message: string}, array{}>
+	 *
+	 * 200: The count
+	 * 422: A date or the unit is missing or wrong, the range ends before it starts, or the app has no Public holiday list for one of its years
+	 */
+	#[NoAdminRequired]
+	#[UserRateLimit(limit: self::READ_LIMIT, period: self::PERIOD)]
+	#[ApiRoute(verb: 'GET', url: '/api/v1/requests/preview')]
+	public function preview(string $from, string $to, string $unit): DataResponse {
+		return $this->answer(fn (): array => $this->workingDays->count($from, $to, $unit));
+	}
+
+	/**
+	 * What $action answers, or the refusal it threw as aps-common's `{message}`.
+	 *
+	 * @param callable(): array<string, mixed> $action
+	 * @return DataResponse<Http::STATUS_OK|Http::STATUS_CREATED, array<string, mixed>, array{}>|DataResponse<Http::STATUS_FORBIDDEN|Http::STATUS_NOT_FOUND|Http::STATUS_UNPROCESSABLE_ENTITY, array{message: string}, array{}>
 	 */
 	private function answer(callable $action, int $status = Http::STATUS_OK): DataResponse {
 		try {
-			return new DataResponse(['person' => $action()], $status);
+			return new DataResponse($action(), $status);
 		} catch (Forbidden $e) {
 			return new DataResponse(['message' => $e->getMessage()], Http::STATUS_FORBIDDEN);
 		} catch (DoesNotExistException $e) {
