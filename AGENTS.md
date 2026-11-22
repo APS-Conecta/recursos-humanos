@@ -6,6 +6,8 @@ its tickets live in this repo.
 
 ## Working rules
 
+- **A ticket's stories:** before implementing, read the stories the «Story → ticket map» comment on
+  recursos-humanos#1 (`gh issue view 1 --comments`) lists for the ticket and for «Every ticket»; the ticket repeats none.
 - **Names:** code is English, using the English terms `CONTEXT.md` gives (Request, Balance, Available, Movement,
   AnnualLeave, AdministrativeDay; Jefatura is kept). Never rename a table, column, route, controller action (an
   OpenAPI operation id) or API field once it ships: API v1 only grows, and a breaking change ships as v2 beside it.
@@ -16,7 +18,8 @@ its tickets live in this repo.
   app's data (ADR 0004). No personal data in logs.
 - **Tests at the one seam** (recursos-humanos#1, Testing Decisions): `tests/seam/` reaches the app only through its
   OCS API and occ, against the throwaway instance, never its classes. `tests/unit/` holds the static gates, nothing
-  else.
+  else. A seam test's dates hold on any day of the year it runs: build them from the current year, never from a day
+  that "today" may already have passed.
 - **Gate before opening a PR**, what `ci.yml` and `release.yml` run: `make aps-drift` (aps-common cloned beside this
   repo); `npm ci`; `npm run lint-js`; `make bundles`; `make test`; `make deps && make instance-up && make
   test-seam`; `make openapi` with no drift in `openapi.json`; then `make instance-clean`. A step you could not run is
@@ -25,8 +28,9 @@ its tickets live in this repo.
   `node_modules/`.
 - **Never edit by hand** `package-lock.json`, `composer.lock`, the dependency lists in `package.json` and
   `composer.json` outside a ticket that names the dependency, `openapi.json` (generated from `ApiController` by
-  `make openapi`; CI fails on drift, MetadataTest on its version and description), or aps-common's copies `vendor/aps/common/src/`, `src/aps/`
-  and `tests/stubs/OC/Hooks/Emitter.php` (`make aps-sync`; `make aps-drift` fails on drift).
+  `make openapi`; CI fails on drift, MetadataTest on its version and description), aps-common's copies `vendor/aps/common/src/`, `src/aps/`
+  and `tests/stubs/OC/Hooks/Emitter.php` (`make aps-sync`; `make aps-drift` fails on drift), or `tests/unit/info.xsd`
+  (re-copy from apps.nextcloud.com).
 - **Strings:** what a person reads (templates, pages, messages) is Spanish, written as literals, in tú as the mockup
   writes it; this app uses no `t()` / `$l->t()`, like its siblings. Code, comments, commits and PR text are English.
 - **Theme only:** `src/` reads Nextcloud's CSS variables and never writes a colour or a font; the suite's theme gives

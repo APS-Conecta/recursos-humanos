@@ -11,6 +11,7 @@ La app mantiene una planilla de respaldo en Excel, un comprobante en PDF por cad
     <author>APS Conecta</author>
     <namespace>RecursosHumanos</namespace>
     <category>organization</category>
+    <bugs>https://github.com/APS-Conecta/recursos-humanos/issues</bugs>
     <dependencies>
         <php min-version="8.2" max-version="8.5"/>
         <nextcloud min-version="34" max-version="34"/>
