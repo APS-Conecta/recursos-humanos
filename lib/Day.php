@@ -23,6 +23,11 @@ final class Day {
 		return $time->getDateTime('now', new DateTimeZone(self::ZONE))->format('Y-m-d');
 	}
 
+	/** The year a YYYY-MM-DD day falls in. */
+	public static function year(string $day): int {
+		return (int)substr($day, 0, 4);
+	}
+
 	/** The day after a YYYY-MM-DD day, or $count days later. */
 	public static function after(string $day, int $count = 1): string {
 		return (new DateTimeImmutable($day, new DateTimeZone('UTC')))->modify("$count day")->format('Y-m-d');

@@ -9,179 +9,179 @@
 			</template>
 			<div class="rh-sidebar">
 				<NcLoadingIcon v-if="state === 'loading'" />
-			<NcNoteCard v-else-if="state === 'failed'" type="error">
-				No se pudo cargar la ficha. Recarga la página.
-			</NcNoteCard>
-
-			<form v-else-if="form === 'complete'" class="rh-form" @submit.prevent="complete">
-				<NcTextField v-model="draft.givenNames" label="Nombres" />
-				<NcTextField v-model="draft.surnames" label="Apellidos" />
-				<NcTextField v-model="draft.rut"
-					label="RUT"
-					placeholder="12.345.678-5"
-					helper-text="Con o sin puntos, y el dígito verificador después del guion." />
-				<NcDateTimePickerNative id="rh-start"
-					:model-value="asDate(draft.startDate)"
-					type="date"
-					label="Fecha de ingreso"
-					@update:model-value="draft.startDate = asDay($event)" />
-				<NcTextField v-model="draft.priorMonths"
-					type="number"
-					min="0"
-					label="Servicio público anterior (meses)" />
-				<NcSelect v-model="draft.regime"
-					input-label="Régimen"
-					:options="regimes"
-					:reduce="(option) => option.id"
-					:clearable="false" />
-				<NcDateTimePickerNative id="rh-regime-from"
-					:model-value="asDate(draft.regimeFrom || draft.startDate)"
-					type="date"
-					label="Régimen desde"
-					@update:model-value="draft.regimeFrom = asDay($event)" />
-				<NcCheckboxRadioSwitch v-model="draft.shift" type="switch">
-					Trabaja en turnos: el feriado legal se cuenta de lunes a viernes
-				</NcCheckboxRadioSwitch>
-				<NcSelect v-model="draft.jefatura"
-					input-label="Jefatura directa"
-					placeholder="Sin jefatura directa (decide el Director/a)"
-					:options="jefaturas"
-					:reduce="(option) => option.uid"
-					label="name" />
-				<NcNoteCard v-if="error" type="error">
-					{{ error }}
+				<NcNoteCard v-else-if="state === 'failed'" type="error">
+					No se pudo cargar la ficha. Recarga la página.
 				</NcNoteCard>
-				<p class="rh-hint">
-					Recursos Humanos ingresa o confirma el RUT con el nombre y los apellidos: son la llave de la persona en el registro, el comprobante y la planilla de respaldo.
-				</p>
-				<div class="rh-buttons">
-					<NcButton variant="tertiary" @click="close">
-						Volver
-					</NcButton>
-					<NcButton variant="primary" type="submit" :disabled="saving">
-						Guardar
-					</NcButton>
-				</div>
-			</form>
 
-			<form v-else-if="form === 'regime'" class="rh-form" @submit.prevent="changeRegime">
-				<NcSelect v-model="draft.regime"
-					input-label="Nuevo régimen"
-					:options="regimes"
-					:reduce="(option) => option.id"
-					:clearable="false" />
-				<NcDateTimePickerNative id="rh-regime-change"
-					:model-value="asDate(draft.regimeFrom)"
-					type="date"
-					label="Desde"
-					@update:model-value="draft.regimeFrom = asDay($event)" />
-				<NcTextArea v-model="draft.reason"
-					label="Motivo (obligatorio)"
-					placeholder="Por ejemplo: decreto de nombramiento N° 845."
-					resize="vertical" />
-				<NcNoteCard v-if="error" type="error">
-					{{ error }}
-				</NcNoteCard>
-				<p class="rh-hint">
-					Es una línea nueva desde esa fecha; las anteriores quedan como están.
-				</p>
-				<div class="rh-buttons">
-					<NcButton variant="tertiary" @click="close">
-						Volver
-					</NcButton>
-					<NcButton variant="primary" type="submit" :disabled="saving">
-						Guardar
-					</NcButton>
-				</div>
-			</form>
+				<form v-else-if="form === 'complete'" class="rh-form" @submit.prevent="complete">
+					<NcTextField v-model="draft.givenNames" label="Nombres" />
+					<NcTextField v-model="draft.surnames" label="Apellidos" />
+					<NcTextField v-model="draft.rut"
+						label="RUT"
+						placeholder="12.345.678-5"
+						helper-text="Con o sin puntos, y el dígito verificador después del guion." />
+					<NcDateTimePickerNative id="rh-start"
+						:model-value="asDate(draft.startDate)"
+						type="date"
+						label="Fecha de ingreso"
+						@update:model-value="draft.startDate = asDay($event)" />
+					<NcTextField v-model="draft.priorMonths"
+						type="number"
+						min="0"
+						label="Servicio público anterior (meses)" />
+					<NcSelect v-model="draft.regime"
+						input-label="Régimen"
+						:options="regimes"
+						:reduce="(option) => option.id"
+						:clearable="false" />
+					<NcDateTimePickerNative id="rh-regime-from"
+						:model-value="asDate(draft.regimeFrom || draft.startDate)"
+						type="date"
+						label="Régimen desde"
+						@update:model-value="draft.regimeFrom = asDay($event)" />
+					<NcCheckboxRadioSwitch v-model="draft.shift" type="switch">
+						Trabaja en turnos: el feriado legal se cuenta de lunes a viernes
+					</NcCheckboxRadioSwitch>
+					<NcSelect v-model="draft.jefatura"
+						input-label="Jefatura directa"
+						placeholder="Sin jefatura directa (decide el Director/a)"
+						:options="jefaturas"
+						:reduce="(option) => option.uid"
+						label="name" />
+					<NcNoteCard v-if="error" type="error">
+						{{ error }}
+					</NcNoteCard>
+					<p class="rh-hint">
+						Recursos Humanos ingresa o confirma el RUT con el nombre y los apellidos: son la llave de la persona en el registro, el comprobante y la planilla de respaldo.
+					</p>
+					<div class="rh-buttons">
+						<NcButton variant="tertiary" @click="close">
+							Volver
+						</NcButton>
+						<NcButton variant="primary" type="submit" :disabled="saving">
+							Guardar
+						</NcButton>
+					</div>
+				</form>
 
-			<form v-else-if="form === 'administrativeDays'" class="rh-form" @submit.prevent="setAdministrativeDays">
-				<NcTextField v-model="draft.days"
-					type="number"
-					min="0"
-					step="0.5"
-					:label="`Días administrativos ${person.days.year}`" />
-				<p class="rh-hint">
-					Ingresó el {{ longDay(person.startDate) }}, a mitad de año: no hay un número por defecto. Recursos Humanos fija cuántos tiene en {{ person.days.year }}, en días enteros o medios días.
-				</p>
-				<NcNoteCard v-if="error" type="error">
-					{{ error }}
-				</NcNoteCard>
-				<div class="rh-buttons">
-					<NcButton variant="tertiary" @click="close">
-						Volver
-					</NcButton>
-					<NcButton variant="primary" type="submit" :disabled="saving">
-						Guardar
-					</NcButton>
-				</div>
-			</form>
+				<form v-else-if="form === 'regime'" class="rh-form" @submit.prevent="changeRegime">
+					<NcSelect v-model="draft.regime"
+						input-label="Nuevo régimen"
+						:options="regimes"
+						:reduce="(option) => option.id"
+						:clearable="false" />
+					<NcDateTimePickerNative id="rh-regime-change"
+						:model-value="asDate(draft.regimeFrom)"
+						type="date"
+						label="Desde"
+						@update:model-value="draft.regimeFrom = asDay($event)" />
+					<NcTextArea v-model="draft.reason"
+						label="Motivo (obligatorio)"
+						placeholder="Por ejemplo: decreto de nombramiento N° 845."
+						resize="vertical" />
+					<NcNoteCard v-if="error" type="error">
+						{{ error }}
+					</NcNoteCard>
+					<p class="rh-hint">
+						Es una línea nueva desde esa fecha; las anteriores quedan como están.
+					</p>
+					<div class="rh-buttons">
+						<NcButton variant="tertiary" @click="close">
+							Volver
+						</NcButton>
+						<NcButton variant="primary" type="submit" :disabled="saving">
+							Guardar
+						</NcButton>
+					</div>
+				</form>
 
-			<template v-else-if="person === null">
-				<NcNoteCard type="warning" heading="Falta completar">
-					Sin su ficha no puede pedir días: falta el RUT, el nombre y los apellidos, la fecha de ingreso, el servicio anterior, el régimen y la jefatura directa.
-				</NcNoteCard>
-				<div class="rh-buttons">
-					<NcButton variant="primary" @click="open('complete')">
-						Completar ficha
-					</NcButton>
-				</div>
-			</template>
-
-			<template v-else>
-				<template v-if="person.days.missing.includes('administrativeDays')">
-					<NcNoteCard type="warning" heading="Falta completar">
-						Ingresó el {{ longDay(person.startDate) }}, a mitad de año: Recursos Humanos fija cuántos días administrativos tiene en {{ person.days.year }}.
+				<form v-else-if="form === 'administrativeDays'" class="rh-form" @submit.prevent="setAdministrativeDays">
+					<NcTextField v-model="draft.days"
+						type="number"
+						min="0"
+						step="0.5"
+						:label="`Días administrativos ${person.days.year}`" />
+					<p class="rh-hint">
+						Ingresó el {{ longDay(person.startDate) }}, a mitad de año: no hay un número por defecto. Recursos Humanos fija cuántos tiene en {{ person.days.year }}, en días enteros o medios días.
+					</p>
+					<NcNoteCard v-if="error" type="error">
+						{{ error }}
 					</NcNoteCard>
 					<div class="rh-buttons">
-						<NcButton variant="primary" @click="open('administrativeDays')">
+						<NcButton variant="tertiary" @click="close">
+							Volver
+						</NcButton>
+						<NcButton variant="primary" type="submit" :disabled="saving">
+							Guardar
+						</NcButton>
+					</div>
+				</form>
+
+				<template v-else-if="person === null">
+					<NcNoteCard type="warning" heading="Falta completar">
+						Sin su ficha no puede pedir días: falta el RUT, el nombre y los apellidos, la fecha de ingreso, el servicio anterior, el régimen y la jefatura directa.
+					</NcNoteCard>
+					<div class="rh-buttons">
+						<NcButton variant="primary" @click="open('complete')">
 							Completar ficha
 						</NcButton>
 					</div>
 				</template>
-				<dl class="rh-record">
-					<dt>Nombre y apellidos</dt>
-					<dd>{{ person.givenNames }} {{ person.surnames }}</dd>
-					<dt>RUT</dt>
-					<dd class="rh-number">
-						{{ dottedRut(person.rut) }}
-					</dd>
-					<dt>Cargo</dt>
-					<dd>{{ cargo }}</dd>
-					<dt>Régimen</dt>
-					<dd>
-						<div v-for="line in person.regimes" :key="line.from">
-							{{ REGIMES[line.regime] }} <span class="rh-hint">desde el {{ longDay(line.from) }}</span>
+
+				<template v-else>
+					<template v-if="person.days.missing.includes('administrativeDays')">
+						<NcNoteCard type="warning" heading="Falta completar">
+							Ingresó el {{ longDay(person.startDate) }}, a mitad de año: Recursos Humanos fija cuántos días administrativos tiene en {{ person.days.year }}.
+						</NcNoteCard>
+						<div class="rh-buttons">
+							<NcButton variant="primary" @click="open('administrativeDays')">
+								Completar ficha
+							</NcButton>
 						</div>
-					</dd>
-					<dt>Fecha de ingreso</dt>
-					<dd>
-						{{ longDay(person.startDate) }}
-						<span v-if="person.priorMonths > 0" class="rh-hint">· más {{ person.priorMonths }} {{ person.priorMonths === 1 ? 'mes' : 'meses' }} de servicio público anterior</span>
-					</dd>
-					<dt>Jefatura directa</dt>
-					<dd>{{ person.jefatura ? person.jefatura.name : 'Sin jefatura: decide el Director/a' }}</dd>
-				</dl>
-				<div class="rh-buttons">
-					<NcButton variant="secondary" @click="open('regime')">
-						Cambiar régimen
-					</NcButton>
-				</div>
-				<h3>Recorrido de la ficha</h3>
-				<ol class="rh-trail">
-					<li v-for="(step, index) in person.trail" :key="index">
-						<div>
-							<strong>{{ stepText(step) }}</strong> · {{ step.actor.name }}
-						</div>
-						<div class="rh-hint">
-							{{ stamp(step.at) }}
-						</div>
-						<div v-if="step.reason">
-							{{ step.reason }}
-						</div>
-					</li>
-				</ol>
-			</template>
+					</template>
+					<dl class="rh-record">
+						<dt>Nombre y apellidos</dt>
+						<dd>{{ person.givenNames }} {{ person.surnames }}</dd>
+						<dt>RUT</dt>
+						<dd class="rh-number">
+							{{ dottedRut(person.rut) }}
+						</dd>
+						<dt>Cargo</dt>
+						<dd>{{ cargo }}</dd>
+						<dt>Régimen</dt>
+						<dd>
+							<div v-for="line in person.regimes" :key="line.from">
+								{{ REGIMES[line.regime] }} <span class="rh-hint">desde el {{ longDay(line.from) }}</span>
+							</div>
+						</dd>
+						<dt>Fecha de ingreso</dt>
+						<dd>
+							{{ longDay(person.startDate) }}
+							<span v-if="person.priorMonths > 0" class="rh-hint">· más {{ person.priorMonths }} {{ person.priorMonths === 1 ? 'mes' : 'meses' }} de servicio público anterior</span>
+						</dd>
+						<dt>Jefatura directa</dt>
+						<dd>{{ person.jefatura ? person.jefatura.name : 'Sin jefatura: decide el Director/a' }}</dd>
+					</dl>
+					<div class="rh-buttons">
+						<NcButton variant="secondary" @click="open('regime')">
+							Cambiar régimen
+						</NcButton>
+					</div>
+					<h3>Recorrido de la ficha</h3>
+					<ol class="rh-trail">
+						<li v-for="(step, index) in person.trail" :key="index">
+							<div>
+								<strong>{{ stepText(step) }}</strong> · {{ step.actor.name }}
+							</div>
+							<div class="rh-hint">
+								{{ stamp(step.at) }}
+							</div>
+							<div v-if="step.reason">
+								{{ step.reason }}
+							</div>
+						</li>
+					</ol>
+				</template>
 			</div>
 		</NcAppSidebarTab>
 		<NcAppSidebarTab v-if="person" id="movements" name="Movimientos" :order="1">
@@ -197,8 +197,8 @@
 						<span class="rh-ledger__why rh-hint">
 							{{ author(movement) }} · {{ movement.reason }}
 						</span>
-						<span v-if="movement.rule" class="rh-ledger__why rh-hint">
-							Norma: {{ movement.rule.title }}, versión {{ movement.rule.version }}
+						<span v-if="movement.ruleVersion" class="rh-ledger__why rh-hint">
+							Norma: {{ movement.ruleVersion.title }}, versión {{ movement.ruleVersion.version }}
 						</span>
 					</li>
 				</ol>

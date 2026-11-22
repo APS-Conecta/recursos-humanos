@@ -17,7 +17,7 @@
 						<div class="rh-rule__title">
 							<strong>{{ rule.title }}</strong>
 							<span class="rh-hint">versión {{ rule.version }}</span>
-							<NcChip v-if="rule.establishment" text="Regla del establecimiento" no-close />
+							<NcChip v-if="rule.establishmentRule" text="Regla del establecimiento" no-close />
 						</div>
 						<div>{{ rule.summary }}</div>
 						<div class="rh-hint">
@@ -63,12 +63,6 @@ export default {
 </script>
 
 <style scoped>
-h3 {
-	margin-block: calc(var(--default-grid-baseline) * 4) var(--default-grid-baseline);
-	font-size: var(--default-font-size);
-	font-weight: bold;
-}
-
 .rh-rules {
 	max-width: 820px;
 	margin: calc(var(--default-grid-baseline) * 3) 0;

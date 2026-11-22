@@ -47,7 +47,7 @@ namespace OCA\RecursosHumanos;
  *     summary: string,
  *     basis: string,
  *     from: string,
- *     establishment: bool,
+ *     establishmentRule: bool,
  * }
  *
  * @psalm-type RecursosHumanosMovement = array{
@@ -59,7 +59,7 @@ namespace OCA\RecursosHumanos;
  *     quantity: float,
  *     actor: ?RecursosHumanosAccount,
  *     reason: string,
- *     rule: ?array{rule: string, version: int, title: string},
+ *     ruleVersion: ?array{rule: string, version: int, title: string},
  * }
  *
  * @psalm-type RecursosHumanosBalance = array{

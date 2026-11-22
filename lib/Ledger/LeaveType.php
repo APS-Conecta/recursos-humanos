@@ -6,7 +6,7 @@ declare(strict_types=1);
 
 namespace OCA\RecursosHumanos\Ledger;
 
-use OCA\RecursosHumanos\WorkingDays\Unit;
+use OCA\RecursosHumanos\RuleBook\RuleBook;
 
 /** The Legal leave types that keep a Balance (CONTEXT.md); later tickets add the others. */
 enum LeaveType: string {
@@ -14,8 +14,12 @@ enum LeaveType: string {
 	case AdministrativeDay = 'administrativeDay';
 	case Training = 'training';
 
-	/** How its days count: Training too in días hábiles, until the law says (recursos-humanos#1, Limits). */
-	public function unit(): Unit {
-		return Unit::Habiles;
+	/** The rule that grants it, whose value also says how its days count. */
+	public function rule(): string {
+		return match ($this) {
+			self::AnnualLeave => RuleBook::ANNUAL_LEAVE_DAYS,
+			self::AdministrativeDay => RuleBook::ADMINISTRATIVE_DAYS,
+			self::Training => RuleBook::TRAINING_DAYS,
+		};
 	}
 }

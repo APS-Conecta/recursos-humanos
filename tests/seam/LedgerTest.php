@@ -35,8 +35,8 @@ class LedgerTest extends SeamTestCase {
 		$rules = array_column($answer['data']['rules'], null, 'rule');
 		self::assertSame(['rule' => 'annualLeaveDays', 'version' => 1, 'title' => 'Feriado legal: días por año',
 			'summary' => '15 días hábiles; 20 con 15 años de servicio; 25 con 20 años. Sube el día en que se cumplen los años.',
-			'basis' => 'Ley 19.378 art. 18', 'from' => '1995-04-13', 'establishment' => false], $rules['annualLeaveDays']);
-		self::assertTrue($rules['administrativeDaysMidYear']['establishment'], 'an establishment rule is marked as one');
+			'basis' => 'Ley 19.378 art. 18', 'from' => '1995-04-13', 'establishmentRule' => false], $rules['annualLeaveDays']);
+		self::assertTrue($rules['administrativeDaysMidYear']['establishmentRule'], 'an establishment rule is marked as one');
 		self::assertSame([], array_diff(['administrativeDays', 'administrativeDaysMidYear', 'annualLeaveDays', 'annualLeaveEligibility', 'trainingDays'], array_keys($rules)),
 			'every rule the grants read is listed');
 	}
@@ -71,8 +71,8 @@ class LedgerTest extends SeamTestCase {
 				self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}$/', $line['date']);
 				self::assertNull($line['actor'], 'the app wrote it on its own');
 				self::assertNotSame('', $line['reason']);
-				self::assertSame($rule, $line['rule']['rule']);
-				self::assertSame(1, $line['rule']['version']);
+				self::assertSame($rule, $line['ruleVersion']['rule']);
+				self::assertSame(1, $line['ruleVersion']['version']);
 			}
 		}
 		self::assertSame(["Días administrativos $year.", "Capacitación $year."], [
@@ -123,10 +123,10 @@ class LedgerTest extends SeamTestCase {
 		self::assertTrue($person['complete']);
 		self::assertSame([], $person['days']['missing']);
 		self::assertTrue(self::entry($staff)['complete']);
-		$line = self::lines($person, 'administrativeDay', ['quantity', 'actor', 'reason', 'rule'])[0];
+		$line = self::lines($person, 'administrativeDay', ['quantity', 'actor', 'reason', 'ruleVersion'])[0];
 		self::assertSame(['quantity' => 3.5, 'actor' => ['uid' => self::$officer, 'name' => self::$officer],
 			'reason' => "Días administrativos $year fijados por Recursos Humanos: ingresó a mitad de año.",
-			'rule' => ['rule' => 'administrativeDaysMidYear', 'version' => 1, 'title' => 'Días administrativos al ingresar a mitad de año']], $line);
+			'ruleVersion' => ['rule' => 'administrativeDaysMidYear', 'version' => 1, 'title' => 'Días administrativos al ingresar a mitad de año']], $line);
 		self::assertSame([422, ['message' => "Los días administrativos de $year ya están fijados."]],
 			self::answer(self::ocs(self::$officer, 'POST', self::PEOPLE . "/$rut/administrative-days", ['days' => 1])));
 	}
@@ -170,6 +170,39 @@ class LedgerTest extends SeamTestCase {
 
 		self::assertSame(201, $answer['status'], json_encode($answer['data']));
 		self::assertSame([15, 6, 5], array_column($answer['data']['person']['days']['balances'], 'balance'), 'under the Estatuto APS on 1 January: the year is granted');
+	}
+
+	public function testMovingToTheEstatutoApsMidYearIsJoiningMidYear(): void {
+		$year = self::$year;
+		$staff = self::person();
+		$rut = self::completes(['startDate' => sprintf('%d-03-01', $year - 3), 'regime' => 'honorarios', 'regimeFrom' => sprintf('%d-03-01', $year - 3)], $staff);
+		self::ocs(self::$officer, 'POST', self::PEOPLE . "/$rut/regimes", ['regime' => 'estatutoAps', 'from' => "$year-06-01", 'reason' => 'Nombramiento en planta.']);
+		self::occ('recursos_humanos:grants', "--date=$year-12-31");
+
+		$person = self::read($rut);
+		self::assertSame([15, 0, 5], array_column($person['days']['balances'], 'balance'), 'Annual leave and Training from the day the Estatuto APS starts');
+		self::assertSame(["$year-06-01", "$year-06-01"], array_column(array_filter($person['movements'], static fn (array $line): bool => $line['period'] === $year), 'date'));
+		self::assertSame(['administrativeDays'], $person['days']['missing']);
+		self::assertFalse(self::entry($staff)['complete']);
+
+		$answer = self::ocs(self::$officer, 'POST', self::PEOPLE . "/$rut/administrative-days", ['days' => 3]);
+		self::assertSame(201, $answer['status'], json_encode($answer['data']));
+		self::assertSame(3, self::balance($answer['data']['person'], 'administrativeDay')['balance']);
+	}
+
+	public function testAServiceRiseNeverLandsWithoutTheYearsGrant(): void {
+		$year = self::$year;
+		$start = sprintf('%d-09-01', $year - 15);
+		$rut = self::completes(['startDate' => $start, 'regime' => 'honorarios', 'regimeFrom' => $start, 'priorMonths' => 0]);
+		self::ocs(self::$officer, 'POST', self::PEOPLE . "/$rut/regimes", ['regime' => 'estatutoAps', 'from' => "$year-06-01", 'reason' => 'Nombramiento en planta.']);
+		self::occ('recursos_humanos:grants', "--date=$year-12-31");
+
+		$person = self::read($rut);
+		self::assertSame([
+			['date' => "$year-09-01", 'kind' => 'serviceRise', 'quantity' => 5],
+			['date' => "$year-06-01", 'kind' => 'grant', 'quantity' => 15],
+		], self::lines($person, 'annualLeave', ['date', 'kind', 'quantity']));
+		self::assertSame(20, self::balance($person, 'annualLeave')['balance']);
 	}
 
 	public function testMisDiasShowsTheCallersOwnBalancesYearsOfServiceAndNextRise(): void {

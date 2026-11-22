@@ -16,8 +16,9 @@ use OCA\RecursosHumanos\ResponseDefinitions;
  * RuleBook (recursos-humanos#1, Modules): the law's numbers as dated Rule versions (ADR 0002).
  *
  * - **They arrive only with app updates**: `seeds/rule-versions.json` is loaded on install and
- *   upgrade (LoadRuleVersions). A new law is a new version with its own date; a shipped version
- *   is never deleted, since Movements name it.
+ *   upgrade (LoadRuleVersions). A new law is a new version with its own date. A shipped version's
+ *   value, date and flag are fixed, since Movements cite it; an update may reword it only. It is
+ *   never deleted.
  * - **The version in force on a day** is the latest that starts on or before it; a day before a
  *   rule's first version reads that first version, the oldest the app knows.
  * - **Establishment rules** (ADR 0005) are versions too, marked as the establishment's.
@@ -42,7 +43,8 @@ class RuleBook {
 	}
 
 	/**
-	 * Writes the shipped versions: a new one is added, a known one takes the file's words.
+	 * Writes the shipped versions: a new one is added whole; a known one takes only the file's
+	 * words (title, summary, basis), never a new value, date or flag.
 	 *
 	 * @return int how many versions were new
 	 */
@@ -53,15 +55,18 @@ class RuleBook {
 		}
 		$added = 0;
 		foreach (json_decode((string)file_get_contents(self::SEED), true, flags: JSON_THROW_ON_ERROR) as $shipped) {
-			$version = $known[$shipped['rule'] . '/' . $shipped['version']] ?? new RuleVersion();
-			$version->setRuleId($shipped['rule']);
-			$version->setVersion($shipped['version']);
+			$version = $known[$shipped['rule'] . '/' . $shipped['version']] ?? null;
+			if ($version === null) {
+				$version = new RuleVersion();
+				$version->setRuleId($shipped['rule']);
+				$version->setVersion($shipped['version']);
+				$version->setValue(json_encode($shipped['value'], JSON_THROW_ON_ERROR));
+				$version->setStartsOn($shipped['from']);
+				$version->setEstablishmentRule($shipped['establishmentRule']);
+			}
 			$version->setTitle($shipped['title']);
 			$version->setSummary($shipped['summary']);
-			$version->setValue(json_encode($shipped['value'], JSON_THROW_ON_ERROR));
 			$version->setBasis($shipped['basis']);
-			$version->setStartsOn($shipped['from']);
-			$version->setEstablishment($shipped['establishment']);
 			if ($version->getId() === null) {
 				$this->mapper->insert($version);
 				$added++;
@@ -95,11 +100,6 @@ class RuleBook {
 		return $rule;
 	}
 
-	/** @return array<string, mixed> what the app reads from a version */
-	public function value(RuleVersion $version): array {
-		return json_decode($version->getValue(), true, flags: JSON_THROW_ON_ERROR);
-	}
-
 	/**
 	 * Normativa: every version, by title, each rule's oldest first.
 	 *
@@ -116,7 +116,7 @@ class RuleBook {
 			'summary' => $version->getSummary(),
 			'basis' => $version->getBasis(),
 			'from' => $version->getStartsOn(),
-			'establishment' => (bool)$version->getEstablishment(),
+			'establishmentRule' => (bool)$version->getEstablishmentRule(),
 		], $all);
 	}
 

@@ -10,6 +10,7 @@ use OCA\RecursosHumanos\Db\Movement;
 use OCA\RecursosHumanos\Db\MovementMapper;
 use OCA\RecursosHumanos\ResponseDefinitions;
 use OCA\RecursosHumanos\RuleBook\RuleBook;
+use OCA\RecursosHumanos\WorkingDays\Unit;
 use OCP\DB\Exception;
 use OCP\IUserManager;
 
@@ -67,7 +68,7 @@ class Ledger {
 
 	/**
 	 * The person's Balance of each Leave type in $period: the sum of its Movements, and of those
-	 * that granted the days.
+	 * that granted the days, in the unit its rule counts in that year.
 	 *
 	 * @param list<Movement> $movements the person's
 	 * @return list<RecursosHumanosBalance>
@@ -75,7 +76,8 @@ class Ledger {
 	public function balances(array $movements, int $period): array {
 		$balances = [];
 		foreach (LeaveType::cases() as $type) {
-			$balances[$type->value] = ['leaveType' => $type->value, 'unit' => $type->unit()->value, 'balance' => 0.0, 'granted' => 0.0];
+			$unit = Unit::from($this->rules->at($type->rule(), "$period-01-01")->value()['unit']);
+			$balances[$type->value] = ['leaveType' => $type->value, 'unit' => $unit->value, 'balance' => 0.0, 'granted' => 0.0];
 		}
 		foreach ($movements as $movement) {
 			if ($movement->getPeriodYear() !== $period || !isset($balances[$movement->getLeaveType()])) {
@@ -102,7 +104,7 @@ class Ledger {
 			'quantity' => $movement->getQuantity(),
 			'actor' => $actor === null ? null : ['uid' => $actor, 'name' => $this->users->getDisplayName($actor) ?? $actor],
 			'reason' => $movement->getReason(),
-			'rule' => $rule === null ? null : [
+			'ruleVersion' => $rule === null ? null : [
 				'rule' => $rule,
 				'version' => (int)$movement->getRuleVersion(),
 				'title' => $this->rules->title($rule, (int)$movement->getRuleVersion()),

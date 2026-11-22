@@ -25,8 +25,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setBasis(string $basis)
  * @method string getStartsOn()
  * @method void setStartsOn(string $startsOn)
- * @method bool|null getEstablishment()
- * @method void setEstablishment(bool $establishment)
+ * @method bool|null getEstablishmentRule()
+ * @method void setEstablishmentRule(bool $establishmentRule)
  */
 class RuleVersion extends Entity {
 	protected ?string $ruleId = null;
@@ -38,10 +38,16 @@ class RuleVersion extends Entity {
 	protected ?string $value = null;
 	protected ?string $basis = null;
 	protected ?string $startsOn = null;
-	protected ?bool $establishment = null;
+	/** An establishment rule (ADR 0005), not the law's. */
+	protected ?bool $establishmentRule = null;
 
 	public function __construct() {
 		$this->addType('version', 'integer');
-		$this->addType('establishment', 'boolean');
+		$this->addType('establishmentRule', 'boolean');
+	}
+
+	/** @return array<string, mixed> what the app reads from the version */
+	public function value(): array {
+		return json_decode((string)$this->value, true, flags: JSON_THROW_ON_ERROR);
 	}
 }

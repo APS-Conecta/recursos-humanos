@@ -190,7 +190,7 @@
                     "quantity",
                     "actor",
                     "reason",
-                    "rule"
+                    "ruleVersion"
                 ],
                 "properties": {
                     "id": {
@@ -234,7 +234,7 @@
                     "reason": {
                         "type": "string"
                     },
-                    "rule": {
+                    "ruleVersion": {
                         "type": "object",
                         "nullable": true,
                         "required": [
@@ -420,7 +420,7 @@
                     "summary",
                     "basis",
                     "from",
-                    "establishment"
+                    "establishmentRule"
                 ],
                 "properties": {
                     "rule": {
@@ -442,7 +442,7 @@
                     "from": {
                         "type": "string"
                     },
-                    "establishment": {
+                    "establishmentRule": {
                         "type": "boolean"
                     }
                 }

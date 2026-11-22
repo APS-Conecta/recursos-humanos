@@ -32,7 +32,7 @@ class Version000100Date20261122000000 extends SimpleMigrationStep {
 			$rules->addColumn('value', Types::TEXT, ['notnull' => true]);
 			$rules->addColumn('basis', Types::STRING, ['notnull' => true, 'length' => 200]);
 			$rules->addColumn('starts_on', Types::STRING, ['notnull' => true, 'length' => 10]);
-			$rules->addColumn('establishment', Types::BOOLEAN, ['notnull' => false, 'default' => false]);
+			$rules->addColumn('establishment_rule', Types::BOOLEAN, ['notnull' => false, 'default' => false]);
 			$rules->setPrimaryKey(['id']);
 			$rules->addUniqueIndex(['rule_id', 'version'], 'rh_rule_versions_rule');
 		}

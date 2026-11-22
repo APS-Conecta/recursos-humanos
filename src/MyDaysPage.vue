@@ -128,12 +128,6 @@ export default {
 </script>
 
 <style scoped>
-h3 {
-	margin-block: calc(var(--default-grid-baseline) * 4) var(--default-grid-baseline);
-	font-size: var(--default-font-size);
-	font-weight: bold;
-}
-
 .rh-cards {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(205px, 1fr));

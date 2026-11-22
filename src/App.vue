@@ -143,6 +143,13 @@ export default {
 	margin: var(--app-navigation-padding) 0 0;
 }
 
+/* A page's sections. */
+.rh-page h3 {
+	margin-block: calc(var(--default-grid-baseline) * 4) var(--default-grid-baseline);
+	font-size: var(--default-font-size);
+	font-weight: bold;
+}
+
 /* Every page's quieter text, and numbers that line up in a column. */
 .rh-hint {
 	color: var(--color-text-maxcontrast);

@@ -15,7 +15,8 @@ use PHPUnit\Framework\TestCase;
  */
 class SeedsTest extends TestCase {
 	private const SEEDS = __DIR__ . '/../../seeds';
-	private const FIELDS = ['rule', 'version', 'title', 'summary', 'value', 'basis', 'from', 'establishment'];
+	private const FIELDS = ['rule', 'version', 'title', 'summary', 'value', 'basis', 'from', 'establishmentRule'];
+	private const UNITS = ['habiles', 'corridos'];
 
 	public function testEachHolidayListNamesRealDaysOfItsOwnYearInOrder(): void {
 		$files = glob(self::SEEDS . '/holidays-*.json') ?: [];
@@ -58,12 +59,14 @@ class SeedsTest extends TestCase {
 					}
 					$years = $step['years'];
 				}
-				return true;
+				return in_array($value['unit'] ?? null, self::UNITS, true);
 			},
 			'annualLeaveEligibility' => static fn (array $value): bool => is_int($value['months'] ?? null) && $value['months'] >= 0,
-			'administrativeDays' => static fn (array $value): bool => is_int($value['days'] ?? null) && $value['days'] >= 0,
+			'administrativeDays' => static fn (array $value): bool => is_int($value['days'] ?? null) && $value['days'] >= 0
+				&& in_array($value['unit'] ?? null, self::UNITS, true),
 			'administrativeDaysMidYear' => static fn (array $value): bool => array_key_exists('days', $value) && ($value['days'] === null || is_int($value['days'])),
-			'trainingDays' => static fn (array $value): bool => is_int($value['days'] ?? null) && $value['days'] >= 0,
+			'trainingDays' => static fn (array $value): bool => is_int($value['days'] ?? null) && $value['days'] >= 0
+				&& in_array($value['unit'] ?? null, self::UNITS, true),
 		];
 		$versions = json_decode((string)file_get_contents(self::SEEDS . '/rule-versions.json'), true, flags: JSON_THROW_ON_ERROR);
 		self::assertIsList($versions, 'rule-versions.json is a list of Rule versions');
@@ -80,7 +83,7 @@ class SeedsTest extends TestCase {
 			foreach (['title', 'summary', 'basis'] as $words) {
 				self::assertNotSame('', trim($version[$words]), "$at: no $words");
 			}
-			self::assertIsBool($version['establishment'], "$at: establishment is true or false");
+			self::assertIsBool($version['establishmentRule'], "$at: establishmentRule is true or false");
 			[$number, $from] = $last[$rule] ?? [0, ''];
 			self::assertSame($number + 1, $version['version'], "$at: a rule's versions count 1, 2, 3… in the file");
 			self::assertGreaterThan($from, $version['from'], "$at: a later version starts later");
