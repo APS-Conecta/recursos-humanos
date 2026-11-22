@@ -25,6 +25,11 @@
 							<NcIconSvgWrapper :path="mdiAccountGroupOutline" />
 						</template>
 					</NcAppNavigationItem>
+					<NcAppNavigationItem name="Ajustes" :active="view === 'settings'" @click="show('settings')">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiCogOutline" />
+						</template>
+					</NcAppNavigationItem>
 				</template>
 			</template>
 		</NcAppNavigation>
@@ -35,6 +40,8 @@
 				:version="version"
 				@open="sidebar = $event"
 				@loaded="people = $event" />
+			<SettingsPage v-else-if="view === 'settings'" />
+			<MyDaysPage v-else-if="view === 'my-days'" />
 			<EmptyPage v-else :title="current.name" :empty="current.empty" :icon="current.icon" />
 		</NcAppContent>
 		<PersonSidebar v-if="view === 'staff' && sidebar"
@@ -57,21 +64,19 @@ import NcContent from '@nextcloud/vue/components/NcContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import { ocsGet } from './api.js'
 import EmptyPage from './EmptyPage.vue'
-import { mdiAccountGroupOutline, mdiCalendarAccountOutline, mdiFormatListBulleted, mdiPlus } from './icons.js'
+import { mdiAccountGroupOutline, mdiCalendarAccountOutline, mdiCogOutline, mdiFormatListBulleted, mdiPlus } from './icons.js'
+import MyDaysPage from './MyDaysPage.vue'
 import PersonSidebar from './PersonSidebar.vue'
 import RequestDialog from './RequestDialog.vue'
+import SettingsPage from './SettingsPage.vue'
 import StaffPage from './StaffPage.vue'
 
-/** Everyone's two pages, empty until the person's record is complete (recursos-humanos#3, #5). */
+/** Everyone's two pages: «Mis días» (MyDaysPage), and «Mis solicitudes», empty until Requests arrive (recursos-humanos#6). */
 const ENTRIES = [
 	{
 		id: 'my-days',
 		name: 'Mis días',
 		icon: mdiCalendarAccountOutline,
-		empty: {
-			name: 'Tus días aparecerán aquí',
-			description: 'Cuando Recursos Humanos complete tu ficha, verás tu feriado legal, tus días administrativos y tus otros permisos.',
-		},
 	},
 	{
 		id: 'my-requests',
@@ -87,8 +92,8 @@ const ENTRIES = [
 export default {
 	name: 'App',
 	components: { EmptyPage, NcAppContent, NcAppNavigation, NcAppNavigationCaption, NcAppNavigationItem, NcAppNavigationNew, NcContent, NcIconSvgWrapper,
-		PersonSidebar, RequestDialog, StaffPage },
-	setup: () => ({ ENTRIES, mdiAccountGroupOutline, mdiPlus }),
+		MyDaysPage, PersonSidebar, RequestDialog, SettingsPage, StaffPage },
+	setup: () => ({ ENTRIES, mdiAccountGroupOutline, mdiCogOutline, mdiPlus }),
 	data: () => ({
 		view: 'my-days',
 		roles: { hrOfficer: false },
@@ -105,7 +110,7 @@ export default {
 			return ENTRIES.find((entry) => entry.id === this.view)
 		},
 		heading() {
-			return this.view === 'staff' ? 'Personal' : this.current.name
+			return { staff: 'Personal', settings: 'Ajustes' }[this.view] ?? this.current.name
 		},
 	},
 	async mounted() {
@@ -136,6 +141,13 @@ export default {
 	align-items: center;
 	min-height: var(--default-clickable-area);
 	margin: var(--app-navigation-padding) 0 0;
+}
+
+/* A page's sections. */
+.rh-page h3 {
+	margin-block: calc(var(--default-grid-baseline) * 4) var(--default-grid-baseline);
+	font-size: var(--default-font-size);
+	font-weight: bold;
 }
 
 /* Every page's quieter text, and numbers that line up in a column. */

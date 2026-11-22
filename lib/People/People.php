@@ -7,7 +7,6 @@ declare(strict_types=1);
 namespace OCA\RecursosHumanos\People;
 
 use APS\Common\Text;
-use DateTimeZone;
 use OCA\RecursosHumanos\Access\Access;
 use OCA\RecursosHumanos\Db\Person;
 use OCA\RecursosHumanos\Db\PersonLogEntry;
@@ -17,6 +16,8 @@ use OCA\RecursosHumanos\Db\RegimeLine;
 use OCA\RecursosHumanos\Db\RegimeLineMapper;
 use OCA\RecursosHumanos\Day;
 use OCA\RecursosHumanos\Forbidden;
+use OCA\RecursosHumanos\Ledger\Grants;
+use OCA\RecursosHumanos\Ledger\Ledger;
 use OCA\RecursosHumanos\Refused;
 use OCA\RecursosHumanos\ResponseDefinitions;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -31,8 +32,11 @@ use OCP\IUserManager;
  * People (recursos-humanos#1, People): the person record and its «Falta completar» state.
  *
  * - **Every enabled account** is in «Personal»; one without a record is «Falta completar» until HR
- *   completes it. A retired (disabled) account stays listed only while it has a record, and a
- *   record outlives its account: nothing is ever deleted.
+ *   completes it, and so is a record still missing what HR sets by hand (a mid-year joiner's
+ *   Administrative days, Grants). A retired (disabled) account stays listed only while it has a
+ *   record, and a record outlives its account: nothing is ever deleted.
+ * - **Completing a record grants the year** (Grants), and the record shows its Movements and
+ *   this year's Balances.
  * - **The RUT keys the record** (ADR 0006): checked by its verifier digit and unique in the
  *   establishment, with the legal nombre y apellidos.
  * - **A Regime change is a new dated line**; the earlier ones stay.
@@ -50,8 +54,6 @@ class People {
 	/** The trail's kinds of step. */
 	private const COMPLETED = 'completed';
 	private const REGIME = 'regime';
-	/** The establishment's day, as the Year close reads it (recursos-humanos#1, Limits). */
-	private const ZONE = 'America/Santiago';
 	/** The columns' length. */
 	private const NAME_LENGTH = 200;
 
@@ -78,6 +80,8 @@ class People {
 		private PersonMapper $people,
 		private RegimeLineMapper $regimes,
 		private PersonLogMapper $log,
+		private Grants $grants,
+		private Ledger $ledger,
 		private Access $access,
 		private IUserManager $users,
 		private ITimeFactory $time,
@@ -133,7 +137,18 @@ class People {
 	}
 
 	/**
-	 * «Completar ficha»: HR writes the record of an account that has none, with its first Regime line.
+	 * The viewer's own record, as «Mis días» shows it; null while HR has not completed it.
+	 *
+	 * @return RecursosHumanosPerson|null
+	 */
+	public function mine(string $viewer): ?array {
+		$person = $this->people->byUid($viewer);
+		return $person === null ? null : $this->view($person);
+	}
+
+	/**
+	 * «Completar ficha»: HR writes the record of an account that has none, with its first Regime
+	 * line, and the year's grants due by today.
 	 *
 	 * @return RecursosHumanosPerson
 	 * @throws Forbidden not an HR officer
@@ -173,6 +188,7 @@ class People {
 				$this->people->insert($person);
 				$this->regimes->insert($line);
 				$this->log->insert($this->step($line, self::COMPLETED, $actor, null));
+				$this->grants->due($person, [$line], $this->today());
 			}, $this->db);
 		} catch (Exception $e) {
 			if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
@@ -185,8 +201,10 @@ class People {
 	}
 
 	/**
-	 * «Cambiar régimen»: a new dated Regime line with its reason; the earlier lines stay. A date
-	 * before the first line corrects the record and belongs to the Recount (recursos-humanos#18).
+	 * «Cambiar régimen»: a new dated Regime line with its reason; the earlier lines stay, and so do
+	 * the Movements written under them. The grants the new line makes due by today are written at
+	 * once. A date before the first line corrects the record and belongs to the Recount
+	 * (recursos-humanos#18).
 	 *
 	 * @return RecursosHumanosPerson
 	 * @throws Forbidden not an HR officer
@@ -198,7 +216,7 @@ class People {
 		$this->mustWrite($actor);
 		$person = $this->visible($actor, $rut);
 		$line = $this->line($person->getUid(), $regime, $from);
-		$current = $this->regimeOn($this->regimes->of($person->getUid()), $line->getStartsOn());
+		$current = Regime::inForce($this->regimes->of($person->getUid()), $line->getStartsOn())?->value;
 		if ($current === null) {
 			throw new Refused(self::BEFORE_FIRST);
 		}
@@ -211,9 +229,10 @@ class People {
 		}
 
 		try {
-			$this->atomic(function () use ($line, $actor, $reason): void {
+			$this->atomic(function () use ($person, $line, $actor, $reason): void {
 				$this->regimes->insert($line);
 				$this->log->insert($this->step($line, self::REGIME, $actor, $reason));
+				$this->grants->due($person, $this->regimes->of($person->getUid()), $this->today());
 			}, $this->db);
 		} catch (Exception $e) {
 			if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
@@ -221,6 +240,21 @@ class People {
 			}
 			throw new Refused(self::SAME_DATE);
 		}
+		return $this->view($person);
+	}
+
+	/**
+	 * «Completar ficha» for a mid-year joiner: HR sets this year's Administrative days.
+	 *
+	 * @return RecursosHumanosPerson
+	 * @throws Forbidden not an HR officer
+	 * @throws DoesNotExistException no such RUT
+	 * @throws Refused not a joiner whose days HR sets, already set, or out of range
+	 */
+	public function setAdministrativeDays(string $actor, string $rut, float $days): array {
+		$this->mustWrite($actor);
+		$person = $this->visible($actor, $rut);
+		$this->grants->setAdministrativeDays($person, $this->regimes->of($person->getUid()), $actor, $days, $this->today());
 		return $this->view($person);
 	}
 
@@ -247,12 +281,16 @@ class People {
 	private function view(Person $person): array {
 		$uid = $person->getUid();
 		$lines = $this->regimes->of($uid);
-		return $this->item($uid, $this->users->get($uid), $person, $lines, $this->today()) + [
+		$today = $this->today();
+		$movements = $this->ledger->of($uid);
+		return $this->item($uid, $this->users->get($uid), $person, $lines, $today) + [
 			'startDate' => $person->getStartDate(),
 			'priorMonths' => $person->getPriorMonths(),
 			'shift' => (bool)$person->getShift(),
 			'regimes' => array_map(static fn (RegimeLine $line): array => ['regime' => $line->getRegime(), 'from' => $line->getStartsOn()], $lines),
 			'trail' => array_map(fn (PersonLogEntry $entry): array => $this->trailStep($entry), $this->log->of($uid)),
+			'days' => $this->grants->summary($person, $lines, $movements, $today),
+			'movements' => array_map($this->ledger->view(...), $movements),
 		];
 	}
 
@@ -266,28 +304,13 @@ class People {
 			'uid' => $uid,
 			'name' => $user?->getDisplayName() ?? $person?->getGivenNames() . ' ' . $person?->getSurnames(),
 			'cargos' => $user === null ? [] : $this->access->cargosOf($user),
-			'complete' => $person !== null,
+			'complete' => $person !== null && $this->grants->missing($person, $lines, $today) === [],
 			'rut' => $person?->getRut(),
 			'givenNames' => $person?->getGivenNames(),
 			'surnames' => $person?->getSurnames(),
-			'regime' => $this->regimeOn($lines, $today),
+			'regime' => Regime::inForce($lines, $today)?->value,
 			'jefatura' => $jefatura === null ? null : $this->account($jefatura),
 		];
-	}
-
-	/**
-	 * The Regime in force on $day: the latest line starting on or before it; null before the first.
-	 *
-	 * @param list<RegimeLine> $lines oldest first
-	 */
-	private function regimeOn(array $lines, string $day): ?string {
-		$regime = null;
-		foreach ($lines as $line) {
-			if ($line->getStartsOn() <= $day) {
-				$regime = $line->getRegime();
-			}
-		}
-		return $regime;
 	}
 
 	/** @return RecursosHumanosAccount */
@@ -356,6 +379,6 @@ class People {
 	}
 
 	private function today(): string {
-		return $this->time->getDateTime('now', new DateTimeZone(self::ZONE))->format('Y-m-d');
+		return Day::today($this->time);
 	}
 }

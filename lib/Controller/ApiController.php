@@ -12,6 +12,7 @@ use OCA\RecursosHumanos\Forbidden;
 use OCA\RecursosHumanos\People\People;
 use OCA\RecursosHumanos\Refused;
 use OCA\RecursosHumanos\ResponseDefinitions;
+use OCA\RecursosHumanos\RuleBook\RuleBook;
 use OCA\RecursosHumanos\WorkingDays\WorkingDays;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -36,6 +37,7 @@ use OCP\IRequest;
  * @psalm-import-type RecursosHumanosHoliday from ResponseDefinitions
  * @psalm-import-type RecursosHumanosPerson from ResponseDefinitions
  * @psalm-import-type RecursosHumanosPersonItem from ResponseDefinitions
+ * @psalm-import-type RecursosHumanosRuleVersion from ResponseDefinitions
  */
 #[OpenAPI(scope: OpenAPI::SCOPE_DEFAULT)]
 class ApiController extends OCSController {
@@ -50,24 +52,26 @@ class ApiController extends OCSController {
 		private Access $access,
 		private People $people,
 		private WorkingDays $workingDays,
+		private RuleBook $rules,
 		private ?string $userId,
 	) {
 		parent::__construct(Application::APP_ID, $request);
 	}
 
 	/**
-	 * Who the caller is to «Recursos Humanos»: their account and the roles their cargo groups give
+	 * Who the caller is to «Recursos Humanos»: their account, the roles their cargo groups give, and
+	 * their own record with this year's Balances and Years of service («Mis días»)
 	 *
-	 * @return DataResponse<Http::STATUS_OK, array{uid: string, roles: array{hrOfficer: bool, director: bool, subdirector: bool}}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{uid: string, roles: array{hrOfficer: bool, director: bool, subdirector: bool}, person: ?RecursosHumanosPerson}, array{}>
 	 *
-	 * 200: The caller and their roles
+	 * 200: The caller, their roles and their record, null until HR completes it
 	 */
 	#[NoAdminRequired]
 	#[UserRateLimit(limit: self::READ_LIMIT, period: self::PERIOD)]
 	#[ApiRoute(verb: 'GET', url: '/api/v1/me')]
 	public function me(): DataResponse {
 		$uid = (string)$this->userId;
-		return new DataResponse(['uid' => $uid, 'roles' => $this->access->rolesOf($uid)]);
+		return new DataResponse(['uid' => $uid, 'roles' => $this->access->rolesOf($uid), 'person' => $this->people->mine($uid)]);
 	}
 
 	/**
@@ -151,6 +155,41 @@ class ApiController extends OCSController {
 	public function changeRegime(string $rut, string $regime, string $from, string $reason): DataResponse {
 		return $this->answer(fn (): array => ['person' => $this->people->changeRegime((string)$this->userId, $rut, $regime, $from, $reason)],
 			Http::STATUS_CREATED);
+	}
+
+	/**
+	 * «Completar ficha» for a mid-year joiner: an HR officer sets this year's Administrative days,
+	 * which the establishment rule leaves to HR
+	 *
+	 * @param string $rut The person's RUT with its verifier digit, with or without dots
+	 * @param float $days From 0 to the year's Administrative days, in whole or half days
+	 * @return DataResponse<Http::STATUS_CREATED, array{person: RecursosHumanosPerson}, array{}>|DataResponse<Http::STATUS_FORBIDDEN|Http::STATUS_NOT_FOUND|Http::STATUS_UNPROCESSABLE_ENTITY, array{message: string}, array{}>
+	 *
+	 * 201: The record with its Administrative days granted
+	 * 403: The caller is not an HR officer
+	 * 404: No record has that RUT
+	 * 422: The person is not a mid-year joiner whose days HR sets, they are already set, or the number is out of range
+	 */
+	#[NoAdminRequired]
+	#[UserRateLimit(limit: self::WRITE_LIMIT, period: self::PERIOD)]
+	#[ApiRoute(verb: 'POST', url: '/api/v1/people/{rut}/administrative-days')]
+	public function setAdministrativeDays(string $rut, float $days): DataResponse {
+		return $this->answer(fn (): array => ['person' => $this->people->setAdministrativeDays((string)$this->userId, $rut, $days)],
+			Http::STATUS_CREATED);
+	}
+
+	/**
+	 * Normativa: every Rule version the app applies, with its value, legal basis and the day it takes effect
+	 *
+	 * @return DataResponse<Http::STATUS_OK, array{rules: list<RecursosHumanosRuleVersion>}, array{}>
+	 *
+	 * 200: The Rule versions, by title
+	 */
+	#[NoAdminRequired]
+	#[UserRateLimit(limit: self::READ_LIMIT, period: self::PERIOD)]
+	#[ApiRoute(verb: 'GET', url: '/api/v1/rules')]
+	public function rules(): DataResponse {
+		return new DataResponse(['rules' => $this->rules->all()]);
 	}
 
 	/**

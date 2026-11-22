@@ -15,6 +15,21 @@ La app mantiene una planilla de respaldo en Excel, un comprobante en PDF por cad
         <php min-version="8.2" max-version="8.5"/>
         <nextcloud min-version="34" max-version="34"/>
     </dependencies>
+    <background-jobs>
+        <job>OCA\RecursosHumanos\BackgroundJob\GrantsDue</job>
+    </background-jobs>
+    <!-- The Rule versions the app ships load on install and on every upgrade (ADR 0002). -->
+    <repair-steps>
+        <post-migration>
+            <step>OCA\RecursosHumanos\Migration\LoadRuleVersions</step>
+        </post-migration>
+        <install>
+            <step>OCA\RecursosHumanos\Migration\LoadRuleVersions</step>
+        </install>
+    </repair-steps>
+    <commands>
+        <command>OCA\RecursosHumanos\Command\GrantsDue</command>
+    </commands>
     <navigations>
         <navigation>
             <name>Recursos Humanos</name>
