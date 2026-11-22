@@ -6,6 +6,8 @@ its tickets live in this repo.
 
 ## Working rules
 
+- **A ticket's stories:** before implementing, read the user stories the story map on recursos-humanos#1 assigns to the
+  ticket; its own text does not repeat them.
 - **Names:** code is English, using the English terms `CONTEXT.md` gives (Request, Balance, Available, Movement,
   AnnualLeave, AdministrativeDay; Jefatura is kept). Never rename a table, column, route, controller action (an
   OpenAPI operation id) or API field once it ships: API v1 only grows, and a breaking change ships as v2 beside it.
@@ -16,7 +18,8 @@ its tickets live in this repo.
   app's data (ADR 0004). No personal data in logs.
 - **Tests at the one seam** (recursos-humanos#1, Testing Decisions): `tests/seam/` reaches the app only through its
   OCS API and occ, against the throwaway instance, never its classes. `tests/unit/` holds the static gates, nothing
-  else.
+  else. A seam test's dates hold on any day of the year it runs: build them from the current year, never from a day
+  that "today" may already have passed.
 - **Gate before opening a PR**, what `ci.yml` and `release.yml` run: `make aps-drift` (aps-common cloned beside this
   repo); `npm ci`; `npm run lint-js`; `make bundles`; `make test`; `make deps && make instance-up && make
   test-seam`; `make openapi` with no drift in `openapi.json`; then `make instance-clean`. A step you could not run is

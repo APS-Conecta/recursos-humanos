@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace OCA\RecursosHumanos\Tests\Unit;
 
 use DOMDocument;
+use LibXMLError;
 use OCA\RecursosHumanos\Controller\ApiController;
 use OCA\RecursosHumanos\Controller\PageController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -48,6 +49,21 @@ class MetadataTest extends TestCase {
 			}
 		}
 		return $actions;
+	}
+
+	/**
+	 * Nextcloud reads info.xml by its app schema, which fixes each element's order: a wrong order
+	 * passes every other gate (recursos-humanos#30). The schema is committed beside this test,
+	 * from https://apps.nextcloud.com/schema/apps/info.xsd.
+	 */
+	public function testInfoXmlFollowsTheAppSchema(): void {
+		$previous = libxml_use_internal_errors(true);
+		$valid = $this->infoXml()->schemaValidate(__DIR__ . '/info.xsd');
+		$errors = array_map(static fn (LibXMLError $error): string => trim($error->message) . " (line $error->line)", libxml_get_errors());
+		libxml_clear_errors();
+		libxml_use_internal_errors($previous);
+
+		self::assertTrue($valid, "appinfo/info.xml breaks the app schema:\n" . implode("\n", $errors));
 	}
 
 	/** The release tag must be v + info.xml's version (pack-app), so every other copy agrees. */

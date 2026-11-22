@@ -97,6 +97,8 @@ export default [
 		rules: {
 			'no-undef': 'error',
 			'rh/theme-only': 'error',
+			// flat/essential leaves template indentation out (recursos-humanos#30).
+			'vue/html-indent': ['error', 'tab'],
 		},
 	},
 ]
