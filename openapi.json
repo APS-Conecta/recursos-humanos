@@ -1356,7 +1356,7 @@
         },
         "/ocs/v2.php/apps/recursos_humanos/api/v1/requests/preview": {
             "get": {
-                "operationId": "api-preview",
+                "operationId": "api-preview-request",
                 "summary": "A Request's count before it is sent, as «Nueva solicitud» shows it while the dates change: the days counted, the days skipped with their reason and holiday name, and the days per year; it writes nothing",
                 "tags": [
                     "api"
@@ -1444,7 +1444,7 @@
                         }
                     },
                     "422": {
-                        "description": "A date or the unit is missing or wrong, the range ends before it starts, or the app has no Public holiday list for one of its years",
+                        "description": "A date or the unit is missing or wrong, the range ends before it starts, or, in días hábiles, the app has no Public holiday list for one of its years",
                         "content": {
                             "application/json": {
                                 "schema": {

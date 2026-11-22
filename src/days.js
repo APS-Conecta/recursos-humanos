@@ -6,6 +6,9 @@ const MONTHS_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 's
 const WEEKDAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
 const WEEKDAYS_SHORT = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
 
+/** A YYYY-MM-DD day's year, month (1 for January) and date. */
+const parts = (day) => day.split('-').map(Number)
+
 /** A YYYY-MM-DD day as a local Date, for the date pickers; null for none. */
 export const asDate = (day) => (day ? new Date(`${day}T00:00`) : null)
 
@@ -19,7 +22,10 @@ export function asDay(date) {
 }
 
 /** 2025-07-01 as the screens show a day: 1 jul 2025. */
-export const longDay = (day) => asDate(day).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
+export function longDay(day) {
+	const [year, month, date] = parts(day)
+	return `${date} ${MONTHS_SHORT[month - 1]} ${year}`
+}
 
 /** The day $count days after a YYYY-MM-DD day. */
 export function addDays(day, count) {
@@ -33,13 +39,13 @@ export const weekday = (day) => asDate(day).getDay()
 
 /** A day in a list of days: lun 5 ene. */
 export function shortDay(day) {
-	const [, month, date] = day.split('-').map(Number)
+	const [, month, date] = parts(day)
 	return `${WEEKDAYS_SHORT[weekday(day)]} ${date} ${MONTHS_SHORT[month - 1]}`
 }
 
 /** A day read out on its own: lunes 5 de enero de 2026. */
 export function fullDay(day) {
-	const [year, month, date] = day.split('-').map(Number)
+	const [year, month, date] = parts(day)
 	return `${WEEKDAYS[weekday(day)]} ${date} de ${MONTHS[month - 1]} de ${year}`
 }
 
@@ -58,8 +64,8 @@ export function runs(days) {
 		if (first === last) {
 			return shortDay(first)
 		}
-		const [, monthA, dateA] = first.split('-').map(Number)
-		const [, monthB, dateB] = last.split('-').map(Number)
+		const [, monthA, dateA] = parts(first)
+		const [, monthB, dateB] = parts(last)
 		return monthA === monthB
 			? `${dateA}–${dateB} ${MONTHS_SHORT[monthA - 1]}`
 			: `${dateA} ${MONTHS_SHORT[monthA - 1]} – ${dateB} ${MONTHS_SHORT[monthB - 1]}`

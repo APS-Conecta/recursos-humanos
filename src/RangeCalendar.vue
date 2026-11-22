@@ -52,6 +52,9 @@ const WEEK = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
  * The range calendar of «Nueva solicitud» (recursos-humanos#4, the mockup's picker): one month,
  * Monday first, with weekends and Public holidays marked and, inside the picked range, the days
  * the count skips. A year the app has no holiday list for cannot be picked.
+ *
+ * Its own grid, not NcDateTimePicker: each day shows whether the preview counts or skips it, and
+ * a holiday's name in its label. The typed dates beside it stay NcDateTimePickerNative.
  */
 export default {
 	name: 'RangeCalendar',
@@ -79,8 +82,12 @@ export default {
 		year() {
 			return Number(this.month.slice(0, 4))
 		},
+		/** The shown month, 1 for January. */
+		monthNumber() {
+			return Number(this.month.slice(5))
+		},
 		title() {
-			const name = MONTHS[Number(this.month.slice(5)) - 1]
+			const name = MONTHS[this.monthNumber - 1]
 			return `${name[0].toUpperCase()}${name.slice(1)} ${this.year}`
 		},
 		/** The empty cells before the 1st, Monday first. */
@@ -132,11 +139,10 @@ export default {
 			immediate: true,
 			handler() {
 				// The month's year, and the one a step away across New Year, so the arrows know.
-				const month = Number(this.month.slice(5))
 				this.read(this.year)
-				if (month === 1) {
+				if (this.monthNumber === 1) {
 					this.read(this.year - 1)
-				} else if (month === 12) {
+				} else if (this.monthNumber === 12) {
 					this.read(this.year + 1)
 				}
 			},
@@ -158,7 +164,7 @@ export default {
 		},
 		/** The month $step months away. */
 		shifted(step) {
-			const date = new Date(this.year, Number(this.month.slice(5)) - 1 + step, 1)
+			const date = new Date(this.year, this.monthNumber - 1 + step, 1)
 			return asDay(date).slice(0, 7)
 		},
 		canShow(step) {

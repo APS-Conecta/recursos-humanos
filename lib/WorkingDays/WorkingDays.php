@@ -18,8 +18,9 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * - **The national list ships with the app**, one seed file per year (`seeds/holidays-<year>.json`,
  *   as Estadística ships its Metas); a later year arrives as another file in an update. The
  *   regional and local days, and the online refresh, are recursos-humanos#17's.
- * - **A range is counted only within years the app has the list for**: without the year's
- *   holidays, the count would be wrong and nothing would say so.
+ * - **A range in días hábiles is counted only within years the app has the list for**: without
+ *   the year's holidays, the count would be wrong and nothing would say so. Días corridos need
+ *   no list.
  * - **A count writes nothing**: it is the preview «Nueva solicitud» shows as the dates change.
  * - **A skipped day keeps its reason**: a Saturday or Sunday is skipped as the weekend, with the
  *   holiday's name when it is one too; a weekday holiday is skipped as the holiday.
@@ -67,7 +68,7 @@ class WorkingDays {
 		}
 		$years = [];
 		for ($year = (int)$first->format('Y'); $year <= (int)$last->format('Y'); $year++) {
-			if ($this->listOf($year) === null) {
+			if ($unit === Unit::Habiles && $this->listOf($year) === null) {
 				throw new Refused(sprintf(self::NO_LIST, $year));
 			}
 			$years[$year] = 0.0;
@@ -78,11 +79,13 @@ class WorkingDays {
 		for ($day = $first; $day <= $last; $day = $day->modify('+1 day')) {
 			$date = $day->format('Y-m-d');
 			$year = (int)$day->format('Y');
-			$holiday = $this->listOf($year)[$date] ?? null;
-			$weekend = (int)$day->format('N') >= 6;
-			if ($unit === Unit::Habiles && ($weekend || $holiday !== null)) {
-				$skipped[] = ['date' => $date, 'reason' => $weekend ? self::WEEKEND : self::HOLIDAY, 'name' => $holiday];
-				continue;
+			if ($unit === Unit::Habiles) {
+				$holiday = $this->listOf($year)[$date] ?? null;
+				$weekend = (int)$day->format('N') >= 6;
+				if ($weekend || $holiday !== null) {
+					$skipped[] = ['date' => $date, 'reason' => $weekend ? self::WEEKEND : self::HOLIDAY, 'name' => $holiday];
+					continue;
+				}
 			}
 			$counted[] = $date;
 			$years[$year]++;

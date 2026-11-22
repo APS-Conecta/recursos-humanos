@@ -180,12 +180,12 @@ class ApiController extends OCSController {
 	 * @return DataResponse<Http::STATUS_OK, RecursosHumanosCount, array{}>|DataResponse<Http::STATUS_UNPROCESSABLE_ENTITY, array{message: string}, array{}>
 	 *
 	 * 200: The count
-	 * 422: A date or the unit is missing or wrong, the range ends before it starts, or the app has no Public holiday list for one of its years
+	 * 422: A date or the unit is missing or wrong, the range ends before it starts, or, in días hábiles, the app has no Public holiday list for one of its years
 	 */
 	#[NoAdminRequired]
 	#[UserRateLimit(limit: self::READ_LIMIT, period: self::PERIOD)]
 	#[ApiRoute(verb: 'GET', url: '/api/v1/requests/preview')]
-	public function preview(string $from, string $to, string $unit): DataResponse {
+	public function previewRequest(string $from, string $to, string $unit): DataResponse {
 		return $this->answer(fn (): array => $this->workingDays->count($from, $to, $unit));
 	}
 

@@ -77,12 +77,16 @@ class WorkingDaysTest extends SeamTestCase {
 		self::assertContains(['date' => '2027-09-17', 'name' => 'Feriado adicional de Fiestas Patrias'], $holidays2027);
 	}
 
-	public function testAYearWithoutAListIsNeitherListedNorCounted(): void {
+	public function testAYearWithoutAListRefusesDiasHabilesOnly(): void {
 		$holidays = self::ocs(self::$staff, 'GET', self::HOLIDAYS . '?year=2028');
-		$count = self::preview('2027-12-27', '2028-01-05', 'corridos');
+		$habiles = self::preview('2027-12-27', '2028-01-05', 'habiles');
+		$corridos = self::preview('2027-12-27', '2028-01-05', 'corridos');
 
 		self::assertSame([404, ['message' => 'Todavía no está la lista de días feriados de 2028.']], [$holidays['status'], $holidays['data']]);
-		self::assertSame([422, ['message' => 'Todavía no está la lista de días feriados de 2028.']], [$count['status'], $count['data']]);
+		self::assertSame([422, ['message' => 'Todavía no está la lista de días feriados de 2028.']], [$habiles['status'], $habiles['data']]);
+		self::assertSame(200, $corridos['status'], 'días corridos need no list');
+		self::assertSame(10, $corridos['data']['days']);
+		self::assertSame([['year' => 2027, 'days' => 5], ['year' => 2028, 'days' => 5]], $corridos['data']['years']);
 	}
 
 	public function testARangeThatCannotBeCountedIsRefusedWithTheReason(): void {
