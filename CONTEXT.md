@@ -124,6 +124,12 @@ _Avoid_: vacaciones, feriado (alone)
 One of the paid days for personal reasons of Ley 19.378 art. 17, taken whole or as a half day.
 _Avoid_: permiso administrativo (in the UI), día libre
 
+**Día hábil** / **día corrido**:
+Kept in Spanish, as Jefatura is. A día hábil is a day that is not a Saturday, Sunday or Public holiday; días corridos
+count every day of a range. Each Leave type counts in one of them (API values `habiles` and `corridos`; in code
+`Unit::Habiles` and `Unit::Corridos`).
+_Avoid_: días laborales, business days
+
 **Public holiday** (día feriado):
 A national, regional or local holiday, which is never a día hábil; the national ones come from an outside list, the
 regional and local ones are added by the HR officer.

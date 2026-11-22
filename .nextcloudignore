@@ -3,8 +3,8 @@
 # pack-app.sh (the org's shared app-release workflow) reads this file with rsync rules anchored
 # at the app root, and it REPLACES the packer's defaults, so it lists every development path
 # itself; '!' re-include lines are refused. The tarball carries appinfo/, js/ (built by the
-# release), lib/, templates/, img/, vendor/aps/common/src (aps-common, committed), LICENSE and
-# README.md: an install needs no build step. vendor/ needs no rule: the release packs a fresh
+# release), lib/, seeds/ (the shipped data), templates/, img/, vendor/aps/common/src (aps-common,
+# committed), LICENSE and README.md: an install needs no build step. vendor/ needs no rule: the release packs a fresh
 # checkout, which holds only what git tracks under it.
 # /.* covers every dotfile and dot directory at the root, this file and .htaccess included.
 - /.*

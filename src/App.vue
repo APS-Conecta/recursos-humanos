@@ -3,6 +3,11 @@
 		<!-- Menu by task (recursos-humanos#1): everyone starts on «Mis días». The navigation lists only
 			what works; each later ticket adds its entry, and its role's caption, here. -->
 		<NcAppNavigation aria-label="Recursos Humanos">
+			<NcAppNavigationNew text="Nueva solicitud" @click="requesting = true">
+				<template #icon>
+					<NcIconSvgWrapper :path="mdiPlus" />
+				</template>
+			</NcAppNavigationNew>
 			<template #list>
 				<NcAppNavigationItem v-for="entry in ENTRIES"
 					:key="entry.id"
@@ -38,6 +43,7 @@
 			:people="people"
 			@close="sidebar = null"
 			@saved="version++" />
+		<RequestDialog v-if="requesting" @close="requesting = false" />
 	</NcContent>
 </template>
 
@@ -46,12 +52,14 @@ import NcAppContent from '@nextcloud/vue/components/NcAppContent'
 import NcAppNavigation from '@nextcloud/vue/components/NcAppNavigation'
 import NcAppNavigationCaption from '@nextcloud/vue/components/NcAppNavigationCaption'
 import NcAppNavigationItem from '@nextcloud/vue/components/NcAppNavigationItem'
+import NcAppNavigationNew from '@nextcloud/vue/components/NcAppNavigationNew'
 import NcContent from '@nextcloud/vue/components/NcContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import { ocsGet } from './api.js'
 import EmptyPage from './EmptyPage.vue'
-import { mdiAccountGroupOutline, mdiCalendarAccountOutline, mdiFormatListBulleted } from './icons.js'
+import { mdiAccountGroupOutline, mdiCalendarAccountOutline, mdiFormatListBulleted, mdiPlus } from './icons.js'
 import PersonSidebar from './PersonSidebar.vue'
+import RequestDialog from './RequestDialog.vue'
 import StaffPage from './StaffPage.vue'
 
 /** Everyone's two pages, empty until the person's record is complete (recursos-humanos#3, #5). */
@@ -78,8 +86,9 @@ const ENTRIES = [
 
 export default {
 	name: 'App',
-	components: { EmptyPage, NcAppContent, NcAppNavigation, NcAppNavigationCaption, NcAppNavigationItem, NcContent, NcIconSvgWrapper, PersonSidebar, StaffPage },
-	setup: () => ({ ENTRIES, mdiAccountGroupOutline }),
+	components: { EmptyPage, NcAppContent, NcAppNavigation, NcAppNavigationCaption, NcAppNavigationItem, NcAppNavigationNew, NcContent, NcIconSvgWrapper,
+		PersonSidebar, RequestDialog, StaffPage },
+	setup: () => ({ ENTRIES, mdiAccountGroupOutline, mdiPlus }),
 	data: () => ({
 		view: 'my-days',
 		roles: { hrOfficer: false },
@@ -88,6 +97,8 @@ export default {
 		/** The «Personal» entry whose sidebar is open. */
 		sidebar: null,
 		version: 0,
+		/** Whether «Nueva solicitud» is open. */
+		requesting: false,
 	}),
 	computed: {
 		current() {

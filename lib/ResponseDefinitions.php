@@ -47,6 +47,29 @@ namespace OCA\RecursosHumanos;
  *     regimes: list<RecursosHumanosRegimeLine>,
  *     trail: list<RecursosHumanosTrailStep>,
  * }
+ *
+ * @psalm-type RecursosHumanosHoliday = array{
+ *     date: string,
+ *     name: string,
+ * }
+ *
+ * @psalm-type RecursosHumanosSkippedDay = array{
+ *     date: string,
+ *     reason: 'weekend'|'holiday',
+ *     name: ?string,
+ * }
+ *
+ * @psalm-type RecursosHumanosYearCount = array{
+ *     year: int,
+ *     days: float,
+ * }
+ *
+ * @psalm-type RecursosHumanosCount = array{
+ *     days: float,
+ *     counted: list<string>,
+ *     skipped: list<RecursosHumanosSkippedDay>,
+ *     years: list<RecursosHumanosYearCount>,
+ * }
  */
 class ResponseDefinitions {
 }
