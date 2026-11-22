@@ -10,7 +10,8 @@ Recursos Humanos registra: solo entonces cambia el saldo, con un movimiento fech
 una planilla de respaldo en Excel, un comprobante en PDF por cada permiso registrado y una API versionada (v1) para que
 otras aplicaciones se conecten. La interfaz está en español; todo lo demás, en inglés. Licencia AGPL-3.0-or-later.
 
-**Estado:** en construcción. Hoy abre en «Mis días», vacío; Recursos Humanos completa las fichas en «Personal», y
+**Estado:** en construcción. Recursos Humanos completa las fichas en «Personal»; con la ficha completa, «Mis días»
+muestra los saldos del año (feriado legal, días administrativos y capacitación), cada uno la suma de sus movimientos.
 «Nueva solicitud» cuenta los días hábiles de un rango con los días feriados nacionales, aunque todavía no envía.
 La especificación es [#1](https://github.com/APS-Conecta/recursos-humanos/issues/1), y el trabajo pendiente está en sus
 subtareas. La primera versión trae los permisos; las calificaciones y la carrera funcionaria vienen después.

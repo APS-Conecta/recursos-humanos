@@ -43,6 +43,29 @@ abstract class SeamTestCase extends TestCase {
 		self::occ('group:adduser', $group, $person);
 	}
 
+	/**
+	 * A complete record for the account, with these fields changed.
+	 *
+	 * @param array<string, mixed> $change
+	 * @return array<string, mixed>
+	 */
+	protected static function record(string $uid, array $change = []): array {
+		return array_replace(['uid' => $uid, 'rut' => self::rut(), 'givenNames' => 'Valentina Paz', 'surnames' => 'Soto Ibarra',
+			'startDate' => '2019-03-04', 'priorMonths' => 26, 'shift' => false, 'jefatura' => null,
+			'regime' => 'estatutoAps', 'regimeFrom' => '2019-03-04'], $change);
+	}
+
+	/** A RUT no other run has used, in its canonical form 12345678-5. */
+	protected static function rut(): string {
+		$body = (string)random_int(10_000_000, 29_999_999);
+		$sum = 0;
+		foreach (array_reverse(str_split($body)) as $i => $digit) {
+			$sum += (int)$digit * (2 + $i % 6);
+		}
+		$verifier = 11 - $sum % 11;
+		return $body . '-' . ($verifier === 11 ? '0' : ($verifier === 10 ? 'K' : (string)$verifier));
+	}
+
 	/** occ as the web server's user; a failing command fails the test with its output. */
 	protected static function occ(string ...$args): string {
 		return self::occWithEnv([], ...$args);

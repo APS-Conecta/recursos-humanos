@@ -18,3 +18,12 @@ Versioning: [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 - «Nueva solicitud»: a range calendar with weekends and Public holidays marked, and the live count of días hábiles.
   API v1 `GET requests/preview`: the days counted, the days skipped with their reason and holiday name, and the days
   per year, in días hábiles or días corridos.
+- «Ajustes › Normativa»: the Rule versions the app applies, read-only, loaded from the file it ships on install and
+  on every upgrade. API v1 `GET rules`.
+- The Ledger: each Balance is the sum of its Movements. A record under the Estatuto APS receives the year's Annual
+  leave (15, 20 or 25 días hábiles by Years of service, from more than one year of service, rising on the day a step
+  is reached), Administrative days and Training, written as they fall due by an hourly job or
+  `occ recursos_humanos:grants`. A mid-year joiner is «Falta completar» until HR sets their Administrative days.
+- «Mis días» shows this year's Balances, Years of service and the next rise; the person sidebar gains «Movimientos».
+  API v1: `GET me` and `GET people/{rut}` carry the record's Balances and Movements;
+  `POST people/{rut}/administrative-days`.

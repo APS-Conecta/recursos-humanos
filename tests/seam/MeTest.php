@@ -21,7 +21,7 @@ class MeTest extends SeamTestCase {
 		$answer = self::ocs($staff, 'GET', self::ME);
 
 		self::assertSame(200, $answer['status']);
-		self::assertSame(['uid' => $staff, 'roles' => self::NO_ROLE], $answer['data']);
+		self::assertSame(['uid' => $staff, 'roles' => self::NO_ROLE, 'person' => null], $answer['data'], 'no record yet: «Mis días» stays empty');
 	}
 
 	public function testRecursosHumanosCargoMakesAnHrOfficer(): void {

@@ -40,12 +40,52 @@ namespace OCA\RecursosHumanos;
  *     reason: ?string,
  * }
  *
+ * @psalm-type RecursosHumanosRuleVersion = array{
+ *     rule: string,
+ *     version: int,
+ *     title: string,
+ *     summary: string,
+ *     basis: string,
+ *     from: string,
+ *     establishment: bool,
+ * }
+ *
+ * @psalm-type RecursosHumanosMovement = array{
+ *     id: int,
+ *     leaveType: 'annualLeave'|'administrativeDay'|'training',
+ *     period: int,
+ *     date: string,
+ *     kind: 'grant'|'serviceRise',
+ *     quantity: float,
+ *     actor: ?RecursosHumanosAccount,
+ *     reason: string,
+ *     rule: ?array{rule: string, version: int, title: string},
+ * }
+ *
+ * @psalm-type RecursosHumanosBalance = array{
+ *     leaveType: 'annualLeave'|'administrativeDay'|'training',
+ *     unit: 'habiles'|'corridos',
+ *     balance: float,
+ *     granted: float,
+ * }
+ *
+ * @psalm-type RecursosHumanosDays = array{
+ *     year: int,
+ *     serviceMonths: int,
+ *     annualLeaveFrom: ?string,
+ *     nextRise: ?array{on: string, years: int, days: float},
+ *     balances: list<RecursosHumanosBalance>,
+ *     missing: list<'administrativeDays'>,
+ * }
+ *
  * @psalm-type RecursosHumanosPerson = RecursosHumanosPersonItem&array{
  *     startDate: string,
  *     priorMonths: int,
  *     shift: bool,
  *     regimes: list<RecursosHumanosRegimeLine>,
  *     trail: list<RecursosHumanosTrailStep>,
+ *     days: RecursosHumanosDays,
+ *     movements: list<RecursosHumanosMovement>,
  * }
  *
  * @psalm-type RecursosHumanosHoliday = array{

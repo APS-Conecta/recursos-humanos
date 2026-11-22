@@ -1,0 +1,52 @@
+[
+	{
+		"rule": "annualLeaveDays",
+		"version": 1,
+		"title": "Feriado legal: días por año",
+		"summary": "15 días hábiles; 20 con 15 años de servicio; 25 con 20 años. Sube el día en que se cumplen los años.",
+		"value": {"steps": [{"years": 0, "days": 15}, {"years": 15, "days": 20}, {"years": 20, "days": 25}]},
+		"basis": "Ley 19.378 art. 18",
+		"from": "1995-04-13",
+		"establishment": false
+	},
+	{
+		"rule": "annualLeaveEligibility",
+		"version": 1,
+		"title": "Feriado legal: desde cuándo",
+		"summary": "Con más de un año de servicio: el primer feriado legal se concede ese día, y después cada 1 de enero.",
+		"value": {"months": 12},
+		"basis": "Ley 19.378 art. 18",
+		"from": "1995-04-13",
+		"establishment": false
+	},
+	{
+		"rule": "administrativeDays",
+		"version": 1,
+		"title": "Días administrativos",
+		"summary": "6 días hábiles por año calendario, concedidos cada 1 de enero.",
+		"value": {"days": 6},
+		"basis": "Ley 19.378 art. 17",
+		"from": "1995-04-13",
+		"establishment": false
+	},
+	{
+		"rule": "administrativeDaysMidYear",
+		"version": 1,
+		"title": "Días administrativos al ingresar a mitad de año",
+		"summary": "Sin un número por defecto: los fija Recursos Humanos para cada persona, entre 0 y los días del año.",
+		"value": {"days": null},
+		"basis": "Ley 19.378 art. 17, que no dice si son proporcionales",
+		"from": "2026-11-19",
+		"establishment": true
+	},
+	{
+		"rule": "trainingDays",
+		"version": 1,
+		"title": "Capacitación",
+		"summary": "Hasta 5 días por año, contados como días hábiles mientras la ley no lo aclare.",
+		"value": {"days": 5},
+		"basis": "Ley 19.378 art. 43",
+		"from": "1995-04-13",
+		"establishment": false
+	}
+]
