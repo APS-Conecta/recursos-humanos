@@ -77,8 +77,9 @@ const themeOnly = {
 	},
 }
 
-// Two rules with teeth: undeclared identifiers (territorio's "Guardar never submitted the form"
-// lesson) and the theme gate, both from Estadística's config. Style stays off on purpose.
+// Three rules with teeth: undeclared identifiers (territorio's "Guardar never submitted the form"
+// lesson) and the theme gate, both from Estadística's config, and template tab indentation, the one
+// style rule (flat/essential leaves it out; recursos-humanos#30). Other style stays off on purpose.
 export default [
 	...eslintPluginVue.configs['flat/essential'],
 	{
@@ -97,7 +98,6 @@ export default [
 		rules: {
 			'no-undef': 'error',
 			'rh/theme-only': 'error',
-			// flat/essential leaves template indentation out (recursos-humanos#30).
 			'vue/html-indent': ['error', 'tab'],
 		},
 	},

@@ -52,9 +52,9 @@ class MetadataTest extends TestCase {
 	}
 
 	/**
-	 * Nextcloud reads info.xml by its app schema, which fixes each element's order: a wrong order
-	 * passes every other gate (recursos-humanos#30). The schema is committed beside this test,
-	 * from https://apps.nextcloud.com/schema/apps/info.xsd.
+	 * The app store validates info.xml against its app schema at upload, which fixes each element's
+	 * order: a wrong order passes every other gate (recursos-humanos#30). The schema is committed
+	 * beside this test, from https://apps.nextcloud.com/schema/apps/info.xsd.
 	 */
 	public function testInfoXmlFollowsTheAppSchema(): void {
 		$previous = libxml_use_internal_errors(true);

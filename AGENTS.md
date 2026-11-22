@@ -6,8 +6,8 @@ its tickets live in this repo.
 
 ## Working rules
 
-- **A ticket's stories:** before implementing, read the user stories the story map on recursos-humanos#1 assigns to the
-  ticket; its own text does not repeat them.
+- **A ticket's stories:** before implementing, read the stories the «Story → ticket map» comment on
+  recursos-humanos#1 (`gh issue view 1 --comments`) lists for the ticket and for «Every ticket»; the ticket repeats none.
 - **Names:** code is English, using the English terms `CONTEXT.md` gives (Request, Balance, Available, Movement,
   AnnualLeave, AdministrativeDay; Jefatura is kept). Never rename a table, column, route, controller action (an
   OpenAPI operation id) or API field once it ships: API v1 only grows, and a breaking change ships as v2 beside it.
@@ -28,8 +28,9 @@ its tickets live in this repo.
   `node_modules/`.
 - **Never edit by hand** `package-lock.json`, `composer.lock`, the dependency lists in `package.json` and
   `composer.json` outside a ticket that names the dependency, `openapi.json` (generated from `ApiController` by
-  `make openapi`; CI fails on drift, MetadataTest on its version and description), or aps-common's copies `vendor/aps/common/src/`, `src/aps/`
-  and `tests/stubs/OC/Hooks/Emitter.php` (`make aps-sync`; `make aps-drift` fails on drift).
+  `make openapi`; CI fails on drift, MetadataTest on its version and description), aps-common's copies `vendor/aps/common/src/`, `src/aps/`
+  and `tests/stubs/OC/Hooks/Emitter.php` (`make aps-sync`; `make aps-drift` fails on drift), or `tests/unit/info.xsd`
+  (re-copy from apps.nextcloud.com).
 - **Strings:** what a person reads (templates, pages, messages) is Spanish, written as literals, in tú as the mockup
   writes it; this app uses no `t()` / `$l->t()`, like its siblings. Code, comments, commits and PR text are English.
 - **Theme only:** `src/` reads Nextcloud's CSS variables and never writes a colour or a font; the suite's theme gives
