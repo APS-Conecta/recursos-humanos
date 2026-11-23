@@ -34,7 +34,7 @@ class RequestsTest extends SeamTestCase {
 		self::joins(self::$director, 'role-director-cesfam');
 		self::$jefatura = self::person();
 		self::$year = (int)(new DateTimeImmutable('now', new DateTimeZone('America/Santiago')))->format('Y');
-		$recorded = self::ocs(self::$officer, 'POST', self::API . '/settings/delegation', ['number' => '1234', 'date' => self::$year . '-01-05']);
+		$recorded = self::ocs(self::$officer, 'POST', self::API . '/settings/delegation', ['number' => '1234', 'date' => self::$year . '-01-01']);
 		self::assertSame(201, $recorded['status'], json_encode($recorded['data']));
 	}
 
@@ -49,7 +49,7 @@ class RequestsTest extends SeamTestCase {
 
 		$read = self::ocs($staff, 'GET', self::API . '/settings/delegation');
 		self::assertSame(200, $read['status']);
-		self::assertSame(['number' => '1234', 'date' => self::$year . '-01-05'], array_intersect_key($read['data']['delegation'], ['number' => 0, 'date' => 0]));
+		self::assertSame(['number' => '1234', 'date' => self::$year . '-01-01'], array_intersect_key($read['data']['delegation'], ['number' => 0, 'date' => 0]));
 		self::assertSame(self::$officer, $read['data']['delegation']['recordedBy']['uid']);
 	}
 
@@ -129,7 +129,7 @@ class RequestsTest extends SeamTestCase {
 		self::assertSame('approved', $approved['data']['request']['state']);
 		self::assertSame([
 			['kind' => 'asked', 'actor' => $person, 'capacity' => null, 'delegation' => null, 'note' => null],
-			['kind' => 'approved', 'actor' => self::$jefatura, 'capacity' => 'delegation', 'delegation' => ['number' => '1234', 'date' => self::$year . '-01-05'], 'note' => null],
+			['kind' => 'approved', 'actor' => self::$jefatura, 'capacity' => 'delegation', 'delegation' => ['number' => '1234', 'date' => self::$year . '-01-01'], 'note' => null],
 		], self::trail($approved['data']['request']));
 		self::assertSame([422, ['message' => 'Esta solicitud ya está decidida.']], self::answer(self::ocs(self::$jefatura, 'POST', self::API . "/requests/$id/approval")));
 		self::assertSame([15, 10], array_values(array_intersect_key(self::balance($person, 'annualLeave'), ['balance' => 0, 'available' => 0])),
@@ -148,7 +148,7 @@ class RequestsTest extends SeamTestCase {
 
 		$request = self::ocs($person, 'GET', self::API . "/requests/$id")['data']['request'];
 		self::assertSame('rejected', $request['state']);
-		self::assertSame(['kind' => 'rejected', 'actor' => $jefatura, 'capacity' => 'delegation', 'delegation' => ['number' => '1234', 'date' => self::$year . '-01-05'], 'note' => $reason],
+		self::assertSame(['kind' => 'rejected', 'actor' => $jefatura, 'capacity' => 'delegation', 'delegation' => ['number' => '1234', 'date' => self::$year . '-01-01'], 'note' => $reason],
 			self::trail($request)[1]);
 		$rule = array_column($request['ruleVersions'], null, 'rule')['annualLeaveRejection'] ?? null;
 		self::assertNotNull($rule, 'a rejected Annual leave cites the establishment rule that allows it');
@@ -192,7 +192,7 @@ class RequestsTest extends SeamTestCase {
 			'Available before this Request counts the others in flight, and its own days come off it');
 		self::assertSame([['year' => $year, 'balance' => 15, 'inFlight' => 5, 'available' => 10]], $byId[$twoDays]['available']);
 		self::assertSame([['year' => $year, 'days' => 2]], $byId[$twoDays]['years']);
-		self::assertSame(['number' => '1234', 'date' => "$year-01-05"], array_intersect_key($queue['delegation'], ['number' => 0, 'date' => 0]));
+		self::assertSame(['number' => '1234', 'date' => "$year-01-01"], array_intersect_key($queue['delegation'], ['number' => 0, 'date' => 0]));
 	}
 
 	public function testTheDeciderIsNotifiedOfTheAskAndThePersonOfTheApproval(): void {

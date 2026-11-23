@@ -258,12 +258,7 @@ export default {
 }
 
 @media (max-width: 700px) {
-	.rh-type {
-	max-width: 300px;
-	margin-block-end: calc(var(--default-grid-baseline) * 3);
-}
-
-.rh-picker {
+	.rh-picker {
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
