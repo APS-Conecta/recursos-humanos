@@ -2,22 +2,23 @@
 
 Researched 2026-11-19. Law texts were read from LeyChile, using the latest consolidated versions: Ley 19.378 v. 2016-01-22, Decreto 1889 v. 2008-10-18, Ley 18.883 v. 2025-09-01, and Ley 19.628 as amended by Ley 21.719 v. 2026-12-01. Contraloría (CGR) dictámenes were read from the CGR base. "UNCONFIRMED" marks anything no primary source settles.
 
-**Sources** (a short key in the tables points to one of these URLs):
+**Sources** (a short key in the tables points to one of these URLs). «In force since» is the Diario Oficial (D.O.) date, or the date the text a Rule version relies on took effect, for each norm the Rule versions cite or will cite. It was read on 2026-11-23 from LeyChile's version history, through its public backend `https://nuevo.leychile.cl/servicios/Navegar/get_norma_json?idNorma=<N>` (no key), N being the URL's `idNorma`; "—" marks a norm no Rule version cites.
 
-| Key | Norm | URL |
-|---|---|---|
-| L19378 | Ley 19.378, Estatuto APS | https://www.bcn.cl/leychile/navegar?idNorma=30745 |
-| D1889 | Decreto 1889/1995 Salud, carrera funcionaria regulation | https://www.bcn.cl/leychile/navegar?idNorma=18693 |
-| D2296 | Decreto 2296/1995 Salud, general regulation | https://www.bcn.cl/leychile/navegar?idNorma=18940 |
-| L18883 | Ley 18.883, municipal Estatuto Administrativo | https://www.bcn.cl/leychile/navegar?idNorma=30256 |
-| CT | Código del Trabajo (DFL 1/2003) | https://www.bcn.cl/leychile/navegar?idNorma=207436 |
-| L19296 | Ley 19.296, public-sector staff associations | https://www.bcn.cl/leychile/navegar?idNorma=30663 |
-| DS3 | DS 3/1984 Salud, medical-leave regulation | https://www.bcn.cl/leychile/navegar?idNorma=7281 |
-| L19628 | Ley 19.628 (text in force until 2026-11-30) | https://www.bcn.cl/leychile/navegar?idNorma=141599 |
-| L19628v | Ley 19.628 as amended by Ley 21.719 (in force from 2026-12-01) | https://www.bcn.cl/leychile/navegar?idNorma=141599&idVersion=2026-12-01 |
-| L21719 | Ley 21.719 | https://www.bcn.cl/leychile/navegar?idNorma=1209272 |
-| CGR n | Contraloría dictamen n | `https://www.contraloria.cl/pdfbuscador/dictamenes/<ID>/html` (ID given per row) |
-| DT5734 | Dirección del Trabajo ORD. 5734/67, 2015 | https://www.dt.gob.cl/legislacion/1624/w3-article-107900.html |
+| Key | Norm | In force since | URL |
+|---|---|---|---|
+| L19378 | Ley 19.378, Estatuto APS | 1995-04-13 (D.O.); arts. 17 and 18 inc. 1–2 unchanged since. Art. 18 inc. 3–4 (extreme zones, Juan Fernández) in their current text from 2016-01-01 (Ley 20.883 art. 32, D.O. 2015-12-02; first added by Ley 20.250, D.O. 2008-02-09) | https://www.bcn.cl/leychile/navegar?idNorma=30745 |
+| D1889 | Decreto 1889/1995 Salud, carrera funcionaria regulation | — | https://www.bcn.cl/leychile/navegar?idNorma=18693 |
+| D2296 | Decreto 2296/1995 Salud, general regulation | — | https://www.bcn.cl/leychile/navegar?idNorma=18940 |
+| L18883 | Ley 18.883, municipal Estatuto Administrativo | 1989-12-29 (D.O.); art. 108 bis from 2006-12-16 (Ley 20.137 art. 3, idNorma=256450), unchanged since | https://www.bcn.cl/leychile/navegar?idNorma=30256 |
+| CT | Código del Trabajo (DFL 1/2003) | 2003-01-16 (D.O.). Art. 66, its leave days as now worded, from 2022-05-09 (Ley 21.371 art. 2, D.O. 2021-09-29, idNorma=1165684; parent or sibling by Ley 21.441, D.O. 2022-05-09, idNorma=1175780). Art. 195 inc. 2 from 2011-10-17 (Ley 20.545, idNorma=1030936; its 5 days date from Ley 20.137, D.O. 2006-12-16). Art. 207 bis from 2017-11-08 (rewritten by L21042 to add the AUC; created by Ley 20.764, D.O. 2014-07-18, idNorma=1064513) | https://www.bcn.cl/leychile/navegar?idNorma=207436 |
+| L21042 | Ley 21.042, the marriage leave for whoever enters an AUC | 2017-11-08 (D.O.) | https://www.bcn.cl/leychile/navegar?idNorma=1110267 |
+| L19296 | Ley 19.296, public-sector staff associations | 1994-03-14 (D.O.) | https://www.bcn.cl/leychile/navegar?idNorma=30663 |
+| DS3 | DS 3/1984 Salud, medical-leave regulation | — | https://www.bcn.cl/leychile/navegar?idNorma=7281 |
+| L19628 | Ley 19.628 (text in force until 2026-11-30) | — | https://www.bcn.cl/leychile/navegar?idNorma=141599 |
+| L19628v | Ley 19.628 as amended by Ley 21.719 (in force from 2026-12-01) | — | https://www.bcn.cl/leychile/navegar?idNorma=141599&idVersion=2026-12-01 |
+| L21719 | Ley 21.719 | — | https://www.bcn.cl/leychile/navegar?idNorma=1209272 |
+| CGR n | Contraloría dictamen n | — | `https://www.contraloria.cl/pdfbuscador/dictamenes/<ID>/html` (ID given per row) |
+| DT5734 | Dirección del Trabajo ORD. 5734/67, 2015 | — | https://www.dt.gob.cl/legislacion/1624/w3-article-107900.html |
 
 **Which law fills the gaps.** Ley 18.883 applies to APS staff for anything Ley 19.378 does not expressly regulate (L19378 art. 4 inc. 1; D1889 art. 4). Ley 18.834 is not the supplementary law for APS. CGR applies the supplementary law only where Ley 19.378 is silent (CGR E15824N25, 2025). One exception: for *profesionales funcionarios* covered by Ley 15.076, the supplementary law on concursos, jornada, feriados and permisos is Ley 15.076, "en cuanto sean conciliables" (L19378 art. 4 inc. 3).
 
@@ -76,7 +77,7 @@ Researched 2026-11-19. Law texts were read from LeyChile, using the latest conso
 | Permiso por nacimiento (other parent) | CT Title II | **5 días** with pay, continuous from the birth "excluyendo el descanso semanal", or spread over the first month. Whether these are hábiles or corridos: **UNCONFIRMED**. | CT art. 195 inc. 2 |
 | Seriously ill child under 1 year | CT Title II | For the period the health service sets, with subsidy | CT art. 199 |
 | Seriously ill or injured child aged 1–17, or terminal spouse or parent | CT | **10 ordinary jornadas a year**, full or partial, to be offset afterwards (see §2) | CT art. 199 bis |
-| Matrimonio or AUC | CT art. 207 bis, which CGR applies to public employees through CT art. 194 (CGR 014494N15). AUC was added by Ley 21.042 (D.O. 2017-11-08). | **5 días hábiles continuos**, in addition to feriado. Notice **30 days** ahead; certificate within **30 days** after. No notice means no leave (CGR 052063N16). Shift staff use it on their rostered days (CGR 018435N17). | CT art. 207 bis |
+| Matrimonio or AUC | CT art. 207 bis, which CGR applies to public employees through CT art. 194 (CGR 014494N15). AUC was added by L21042 (D.O. 2017-11-08). | **5 días hábiles continuos**, in addition to feriado. Notice **30 days** ahead; certificate within **30 days** after. No notice means no leave (CGR 052063N16). Shift staff use it on their rostered days (CGR 018435N17). | CT art. 207 bis |
 | Fallecimiento | L18883 art. 108 bis grants the CT art. 66 leaves to municipal staff, and it reaches APS through L19378 art. 4. No APS-specific ruling was found. | Child: **10 días corridos**. Spouse or conviviente civil: **7 días corridos**. Child in gestation: **7 días hábiles**. Parent or sibling: **4 días hábiles**. Taken from the date of death; cannot be paid in cash. | CT art. 66; L18883 art. 108 bis |
 | Capacitación | Training, education or professional development | Up to **5 días per year** with pay. Whether these are hábiles or corridos: **UNCONFIRMED**. Reemplazo staff may attend within their contract term (CGR 091025N15). | L19378 art. 43 inc. 3; D1889 art. 37 |
 | Misión de estudio (categories A and B) | Comisión de servicio with pay; the professional must then return to the post for **at least twice** its duration. Viático per L18883 art. 97 e) (CGR 013923N17). | — | L19378 art. 43 inc. 2 |

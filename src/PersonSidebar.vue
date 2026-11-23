@@ -384,10 +384,6 @@ export default {
 </script>
 
 <style scoped>
-.rh-sidebar {
-	padding: 0 calc(var(--default-grid-baseline) * 3) calc(var(--default-grid-baseline) * 4);
-}
-
 .rh-form {
 	display: flex;
 	flex-direction: column;
@@ -400,36 +396,6 @@ export default {
 	justify-content: flex-end;
 	gap: calc(var(--default-grid-baseline) * 2);
 	margin-block: calc(var(--default-grid-baseline) * 3);
-}
-
-/* Label above value, whatever Nextcloud's own dl styles say. */
-.rh-record dt,
-.rh-record dd {
-	display: block;
-	float: none;
-	width: auto;
-	margin: 0;
-	padding: 0;
-	text-align: start;
-}
-
-.rh-record dt {
-	margin-top: calc(var(--default-grid-baseline) * 3);
-	color: var(--color-text-maxcontrast);
-}
-
-.rh-sidebar h3 {
-	margin-block: calc(var(--default-grid-baseline) * 4) calc(var(--default-grid-baseline) * 2);
-	font-size: var(--default-font-size);
-	font-weight: bold;
-}
-
-.rh-trail {
-	padding-inline-start: calc(var(--default-grid-baseline) * 5);
-}
-
-.rh-trail li + li {
-	margin-top: calc(var(--default-grid-baseline) * 2);
 }
 
 .rh-ledger {

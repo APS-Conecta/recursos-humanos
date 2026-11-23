@@ -15,7 +15,7 @@
 		<template v-else>
 			<h3>Saldos {{ days.year }}</h3>
 			<p class="rh-hint">
-				Saldo: la suma de tus movimientos. Cambia solo con un movimiento nuevo, con su fecha y su motivo.
+				Saldo: la suma de tus movimientos; cambia solo cuando Recursos Humanos registra. Disponible: el saldo menos tus solicitudes en curso (pendientes o aprobadas sin registrar).
 			</p>
 			<NcNoteCard v-if="honorarios" type="info">
 				Estás a honorarios: sin feriado legal ni días administrativos.
@@ -36,9 +36,23 @@
 						</p>
 					</template>
 					<template v-else>
-						<p>
-							<span class="rh-card__balance rh-number">{{ number(balance.balance) }}</span>
-							<span class="rh-hint">de {{ number(balance.granted) }} · {{ daysWord(balance.granted, balance.unit) }}</span>
+						<div class="rh-card__numbers">
+							<div>
+								<div class="rh-hint">
+									Saldo
+								</div>
+								<span class="rh-card__balance rh-number">{{ number(balance.balance) }}</span>
+								<span class="rh-hint">de {{ number(balance.granted) }}</span>
+							</div>
+							<div>
+								<div class="rh-hint">
+									Disponible
+								</div>
+								<span class="rh-card__balance rh-number">{{ number(balance.available) }}</span>
+							</div>
+						</div>
+						<p class="rh-hint">
+							{{ daysWord(balance.granted, balance.unit) }}
 						</p>
 						<div class="rh-meter" aria-hidden="true">
 							<span :style="{ width: `${share(balance)}%` }" />
@@ -58,6 +72,9 @@
 					</p>
 				</div>
 			</div>
+			<p v-if="!honorarios" class="rh-hint rh-decider">
+				{{ deciderText(person.decider) }}
+			</p>
 		</template>
 	</div>
 </template>
@@ -73,15 +90,17 @@ import { daysWord, longDay, number } from './days.js'
 import { mdiCalendarAccountOutline, mdiHistory } from './icons.js'
 import { LEAVE_TYPES, serviceText } from './ledger.js'
 import { REGIMES } from './people.js'
+import { deciderText } from './requests.js'
 
 /**
- * «Mis días» (recursos-humanos#5): this year's Balance of each Leave type, the person's Years of
- * service and the day their Annual leave rises; empty until HR completes the record.
+ * «Mis días» (recursos-humanos#5, #6): this year's Balance and Available days of each Leave type,
+ * the person's Years of service, the day their Annual leave rises, and who decides their Requests;
+ * empty until HR completes the record.
  */
 export default {
 	name: 'MyDaysPage',
 	components: { NcChip, NcEmptyContent, NcIconSvgWrapper, NcLoadingIcon, NcNoteCard },
-	setup: () => ({ LEAVE_TYPES, REGIMES, daysWord, longDay, mdiCalendarAccountOutline, mdiHistory, number, serviceText }),
+	setup: () => ({ LEAVE_TYPES, REGIMES, daysWord, deciderText, longDay, mdiCalendarAccountOutline, mdiHistory, number, serviceText }),
 	data: () => ({
 		state: 'loading',
 		/** The caller's record, null until HR completes it. */
@@ -158,6 +177,12 @@ export default {
 	font-weight: bold;
 }
 
+.rh-card__numbers {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--default-grid-baseline) * 5);
+}
+
 .rh-card__balance {
 	margin-inline-end: var(--default-grid-baseline);
 	font-size: 28px;
@@ -190,5 +215,10 @@ export default {
 
 .rh-service p {
 	margin: var(--default-grid-baseline) 0 0;
+}
+
+.rh-decider {
+	max-width: 720px;
+	margin-block-start: calc(var(--default-grid-baseline) * 3);
 }
 </style>

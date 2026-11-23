@@ -51,7 +51,8 @@ const WEEK = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 /**
  * The range calendar of «Nueva solicitud» (recursos-humanos#4, the mockup's picker): one month,
  * Monday first, with weekends and Public holidays marked and, inside the picked range, the days
- * the count skips. A year the app has no holiday list for cannot be picked.
+ * the count skips. In días hábiles, a year the app has no holiday list for cannot be picked; días
+ * corridos need no list.
  *
  * Its own grid, not NcDateTimePicker: each day shows whether the preview counts or skips it, and
  * a holiday's name in its label. The typed dates beside it stay NcDateTimePickerNative.
@@ -64,6 +65,8 @@ export default {
 		to: { type: String, default: '' },
 		/** The days the preview counts in the range, or null while there is no count. */
 		counted: { type: Array, default: null },
+		/** How the Leave type counts: 'habiles' needs the year's holiday list, 'corridos' does not. */
+		unit: { type: String, default: 'habiles' },
 	},
 	emits: ['pick'],
 	setup: () => ({ WEEK, mdiChevronLeft, mdiChevronRight }),
@@ -95,7 +98,7 @@ export default {
 			return (weekday(`${this.month}-01`) + 6) % 7
 		},
 		missing() {
-			return this.lists[this.year] === null ? this.reasons[this.year] : ''
+			return this.unlisted(this.year) ? this.reasons[this.year] : ''
 		},
 		cells() {
 			const holidays = this.lists[this.year] ?? {}
@@ -114,7 +117,7 @@ export default {
 					date: Number(day.slice(8)),
 					holiday,
 					end,
-					disabled: this.lists[this.year] === null,
+					disabled: this.unlisted(this.year),
 					label: `${fullDay(day)}${kind}${count}`,
 					classes: {
 						'rh-calendar__day--weekend': weekend,
@@ -168,7 +171,11 @@ export default {
 			return asDay(date).slice(0, 7)
 		},
 		canShow(step) {
-			return this.lists[Number(this.shifted(step).slice(0, 4))] !== null
+			return !this.unlisted(Number(this.shifted(step).slice(0, 4)))
+		},
+		/** Whether $year cannot be picked: días hábiles, and the app has no holiday list for it. */
+		unlisted(year) {
+			return this.unit === 'habiles' && this.lists[year] === null
 		},
 		move(step) {
 			this.month = this.shifted(step)

@@ -13,7 +13,7 @@ namespace OCA\RecursosHumanos\Tests\Seam;
  */
 class MeTest extends SeamTestCase {
 	private const ME = '/apps/recursos_humanos/api/v1/me';
-	private const NO_ROLE = ['hrOfficer' => false, 'director' => false, 'subdirector' => false];
+	private const NO_ROLE = ['hrOfficer' => false, 'director' => false, 'subdirector' => false, 'jefatura' => false];
 
 	public function testAStaffMemberHasNoRole(): void {
 		$staff = self::person();

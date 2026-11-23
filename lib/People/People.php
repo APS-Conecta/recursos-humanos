@@ -8,6 +8,7 @@ namespace OCA\RecursosHumanos\People;
 
 use APS\Common\Text;
 use OCA\RecursosHumanos\Access\Access;
+use OCA\RecursosHumanos\Accounts;
 use OCA\RecursosHumanos\Db\Person;
 use OCA\RecursosHumanos\Db\PersonLogEntry;
 use OCA\RecursosHumanos\Db\PersonLogMapper;
@@ -19,6 +20,8 @@ use OCA\RecursosHumanos\Forbidden;
 use OCA\RecursosHumanos\Ledger\Grants;
 use OCA\RecursosHumanos\Ledger\Ledger;
 use OCA\RecursosHumanos\Refused;
+use OCA\RecursosHumanos\Requests\Deciders;
+use OCA\RecursosHumanos\Requests\Requests;
 use OCA\RecursosHumanos\ResponseDefinitions;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\TTransactional;
@@ -35,15 +38,14 @@ use OCP\IUserManager;
  *   completes it, and so is a record still missing what HR sets by hand (a mid-year joiner's
  *   Administrative days, Grants). A retired (disabled) account stays listed only while it has a
  *   record, and a record outlives its account: nothing is ever deleted.
- * - **Completing a record grants the year** (Grants), and the record shows its Movements and
- *   this year's Balances.
+ * - **Completing a record grants the year** (Grants), and the record shows its Movements,
+ *   this year's Balances and Available days, and who decides the person's Requests.
  * - **The RUT keys the record** (ADR 0006): checked by its verifier digit and unique in the
  *   establishment, with the legal nombre y apellidos.
  * - **A Regime change is a new dated line**; the earlier ones stay.
  * - **The record keeps its own trail**: who completed it and who changed its Regime, when and why.
  * - **Only HR writes**; everyone reads their own record and HR everyone's (Access).
  *
- * @psalm-import-type RecursosHumanosAccount from ResponseDefinitions
  * @psalm-import-type RecursosHumanosPerson from ResponseDefinitions
  * @psalm-import-type RecursosHumanosPersonItem from ResponseDefinitions
  * @psalm-import-type RecursosHumanosTrailStep from ResponseDefinitions
@@ -82,7 +84,10 @@ class People {
 		private PersonLogMapper $log,
 		private Grants $grants,
 		private Ledger $ledger,
+		private Requests $requests,
+		private Deciders $deciders,
 		private Access $access,
+		private Accounts $accounts,
 		private IUserManager $users,
 		private ITimeFactory $time,
 		private IDBConnection $db,
@@ -289,7 +294,8 @@ class People {
 			'shift' => (bool)$person->getShift(),
 			'regimes' => array_map(static fn (RegimeLine $line): array => ['regime' => $line->getRegime(), 'from' => $line->getStartsOn()], $lines),
 			'trail' => array_map(fn (PersonLogEntry $entry): array => $this->trailStep($entry), $this->log->of($uid)),
-			'days' => $this->grants->summary($person, $lines, $movements, $today),
+			'days' => $this->grants->summary($person, $lines, $movements, $this->requests->inFlight($uid, Day::year($today)), $today),
+			'decider' => $this->deciders->view($this->deciders->of($person)),
 			'movements' => array_map($this->ledger->view(...), $movements),
 		];
 	}
@@ -309,13 +315,8 @@ class People {
 			'givenNames' => $person?->getGivenNames(),
 			'surnames' => $person?->getSurnames(),
 			'regime' => Regime::inForce($lines, $today)?->value,
-			'jefatura' => $jefatura === null ? null : $this->account($jefatura),
+			'jefatura' => $jefatura === null ? null : $this->accounts->view($jefatura),
 		];
-	}
-
-	/** @return RecursosHumanosAccount */
-	private function account(string $uid): array {
-		return ['uid' => $uid, 'name' => $this->users->getDisplayName($uid) ?? $uid];
 	}
 
 	/** @return RecursosHumanosTrailStep */
@@ -323,7 +324,7 @@ class People {
 		$detail = json_decode($entry->getDetail() ?? '', true);
 		return [
 			'kind' => $entry->getKind(),
-			'actor' => $this->account($entry->getActor()),
+			'actor' => $this->accounts->view($entry->getActor()),
 			'at' => $entry->getAt(),
 			'regime' => $detail['regime'] ?? null,
 			'from' => $detail['from'] ?? null,

@@ -18,6 +18,17 @@
 						<NcIconSvgWrapper :path="entry.icon" />
 					</template>
 				</NcAppNavigationItem>
+				<template v-if="roles.jefatura || roles.director">
+					<NcAppNavigationCaption name="Jefatura" />
+					<NcAppNavigationItem name="Por decidir" :active="view === 'decisions'" @click="show('decisions')">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiAccountCheckOutline" />
+						</template>
+						<template v-if="toDecide > 0" #counter>
+							<NcCounterBubble :count="toDecide" type="highlighted" />
+						</template>
+					</NcAppNavigationItem>
+				</template>
 				<template v-if="roles.hrOfficer">
 					<NcAppNavigationCaption name="Recursos Humanos" />
 					<NcAppNavigationItem name="Personal" :active="view === 'staff'" @click="show('staff')">
@@ -34,15 +45,19 @@
 			</template>
 		</NcAppNavigation>
 
-		<NcAppContent :page-heading="heading">
+		<NcAppContent :page-heading="HEADINGS[view]">
 			<StaffPage v-if="view === 'staff'"
 				:selected="sidebar?.uid ?? null"
 				:version="version"
 				@open="sidebar = $event"
 				@loaded="people = $event" />
 			<SettingsPage v-else-if="view === 'settings'" />
-			<MyDaysPage v-else-if="view === 'my-days'" />
-			<EmptyPage v-else :title="current.name" :empty="current.empty" :icon="current.icon" />
+			<DecisionsPage v-else-if="view === 'decisions'" @decided="countToDecide" />
+			<MyRequestsPage v-else-if="view === 'my-requests'"
+				:selected="request?.id ?? null"
+				:version="version"
+				@open="request = $event" />
+			<MyDaysPage v-else />
 		</NcAppContent>
 		<PersonSidebar v-if="view === 'staff' && sidebar"
 			:key="sidebar.uid"
@@ -50,7 +65,15 @@
 			:people="people"
 			@close="sidebar = null"
 			@saved="version++" />
-		<RequestDialog v-if="requesting" @close="requesting = false" />
+		<RequestSidebar v-if="view === 'my-requests' && request"
+			:key="request.id"
+			:request="request"
+			:viewer="uid"
+			@close="request = null" />
+		<RequestDialog v-if="requesting"
+			:decider="person?.decider ?? null"
+			@close="requesting = false"
+			@sent="sent" />
 	</NcContent>
 </template>
 
@@ -61,69 +84,87 @@ import NcAppNavigationCaption from '@nextcloud/vue/components/NcAppNavigationCap
 import NcAppNavigationItem from '@nextcloud/vue/components/NcAppNavigationItem'
 import NcAppNavigationNew from '@nextcloud/vue/components/NcAppNavigationNew'
 import NcContent from '@nextcloud/vue/components/NcContent'
+import NcCounterBubble from '@nextcloud/vue/components/NcCounterBubble'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import { ocsGet } from './api.js'
-import EmptyPage from './EmptyPage.vue'
-import { mdiAccountGroupOutline, mdiCalendarAccountOutline, mdiCogOutline, mdiFormatListBulleted, mdiPlus } from './icons.js'
+import DecisionsPage from './DecisionsPage.vue'
+import { mdiAccountCheckOutline, mdiAccountGroupOutline, mdiCalendarAccountOutline, mdiCogOutline, mdiFormatListBulleted, mdiPlus } from './icons.js'
 import MyDaysPage from './MyDaysPage.vue'
+import MyRequestsPage from './MyRequestsPage.vue'
 import PersonSidebar from './PersonSidebar.vue'
 import RequestDialog from './RequestDialog.vue'
+import RequestSidebar from './RequestSidebar.vue'
 import SettingsPage from './SettingsPage.vue'
 import StaffPage from './StaffPage.vue'
 
-/** Everyone's two pages: «Mis días» (MyDaysPage), and «Mis solicitudes», empty until Requests arrive (recursos-humanos#6). */
+/** Everyone's two pages: «Mis días» (MyDaysPage) and «Mis solicitudes» (MyRequestsPage). */
 const ENTRIES = [
-	{
-		id: 'my-days',
-		name: 'Mis días',
-		icon: mdiCalendarAccountOutline,
-	},
-	{
-		id: 'my-requests',
-		name: 'Mis solicitudes',
-		icon: mdiFormatListBulleted,
-		empty: {
-			name: 'Todavía no tienes solicitudes',
-			description: 'Cuando pidas días, aquí verás cada solicitud y en qué va.',
-		},
-	},
+	{ id: 'my-days', name: 'Mis días', icon: mdiCalendarAccountOutline },
+	{ id: 'my-requests', name: 'Mis solicitudes', icon: mdiFormatListBulleted },
 ]
+
+/** Each page's heading. */
+const HEADINGS = { 'my-days': 'Mis días', 'my-requests': 'Mis solicitudes', decisions: 'Por decidir', staff: 'Personal', settings: 'Ajustes' }
+
+/** The pages a link may open by its #fragment, as the notifications do (Notifier). */
+const LINKS = { 'mis-dias': 'my-days', 'mis-solicitudes': 'my-requests', 'por-decidir': 'decisions' }
 
 export default {
 	name: 'App',
-	components: { EmptyPage, NcAppContent, NcAppNavigation, NcAppNavigationCaption, NcAppNavigationItem, NcAppNavigationNew, NcContent, NcIconSvgWrapper,
-		MyDaysPage, PersonSidebar, RequestDialog, SettingsPage, StaffPage },
-	setup: () => ({ ENTRIES, mdiAccountGroupOutline, mdiCogOutline, mdiPlus }),
+	components: { DecisionsPage, MyDaysPage, MyRequestsPage, NcAppContent, NcAppNavigation, NcAppNavigationCaption, NcAppNavigationItem, NcAppNavigationNew,
+		NcContent, NcCounterBubble, NcIconSvgWrapper, PersonSidebar, RequestDialog, RequestSidebar, SettingsPage, StaffPage },
+	setup: () => ({ ENTRIES, HEADINGS, mdiAccountCheckOutline, mdiAccountGroupOutline, mdiCogOutline, mdiPlus }),
 	data: () => ({
-		view: 'my-days',
-		roles: { hrOfficer: false },
+		view: LINKS[window.location.hash.slice(1)] ?? 'my-days',
+		uid: '',
+		roles: { hrOfficer: false, director: false, jefatura: false },
+		/** The viewer's own record, for who decides their Requests; null until HR completes it. */
+		person: null,
+		/** How many Requests wait for the viewer's decision. */
+		toDecide: 0,
 		/** «Personal»'s entries, for the Jefatura picker. */
 		people: [],
 		/** The «Personal» entry whose sidebar is open. */
 		sidebar: null,
+		/** The Request whose sidebar is open. */
+		request: null,
 		version: 0,
 		/** Whether «Nueva solicitud» is open. */
 		requesting: false,
 	}),
-	computed: {
-		current() {
-			return ENTRIES.find((entry) => entry.id === this.view)
-		},
-		heading() {
-			return { staff: 'Personal', settings: 'Ajustes' }[this.view] ?? this.current.name
-		},
-	},
 	async mounted() {
 		try {
-			this.roles = (await ocsGet('me')).roles
+			const me = await ocsGet('me')
+			this.uid = me.uid
+			this.roles = me.roles
+			this.person = me.person
 		} catch {
 			// Without the roles the menu keeps everyone's pages, which need none.
 		}
+		this.countToDecide()
 	},
 	methods: {
 		show(view) {
 			this.view = view
 			this.sidebar = null
+			this.request = null
+		},
+		async countToDecide() {
+			if (!this.roles.jefatura && !this.roles.director) {
+				return
+			}
+			try {
+				this.toDecide = (await ocsGet('decisions')).requests.length
+			} catch {
+				// The counter is a hint; «Por decidir» itself says when it cannot load.
+			}
+		},
+		/** A Request just sent opens in «Mis solicitudes», with its sidebar. */
+		sent(request) {
+			this.requesting = false
+			this.show('my-requests')
+			this.request = request
+			this.version++
 		},
 	},
 }
@@ -150,12 +191,52 @@ export default {
 	font-weight: bold;
 }
 
-/* Every page's quieter text, and numbers that line up in a column. */
+/* Every page's quieter text, its refusals, and numbers that line up in a column. */
 .rh-hint {
 	color: var(--color-text-maxcontrast);
 }
 
+.rh-error {
+	color: var(--color-text-error);
+}
+
 .rh-number {
 	font-variant-numeric: tabular-nums;
+}
+
+/* A sidebar's body, and its sections. */
+.rh-sidebar {
+	padding: 0 calc(var(--default-grid-baseline) * 3) calc(var(--default-grid-baseline) * 4);
+}
+
+.rh-sidebar h3 {
+	margin-block: calc(var(--default-grid-baseline) * 4) calc(var(--default-grid-baseline) * 2);
+	font-size: var(--default-font-size);
+	font-weight: bold;
+}
+
+/* A record's facts, label above value, whatever Nextcloud's own dl styles say. */
+.rh-record dt,
+.rh-record dd {
+	display: block;
+	float: none;
+	width: auto;
+	margin: 0;
+	padding: 0;
+	text-align: start;
+}
+
+.rh-record dt {
+	margin-top: calc(var(--default-grid-baseline) * 3);
+	color: var(--color-text-maxcontrast);
+}
+
+/* A record's or a Request's trail, oldest step first. */
+.rh-trail {
+	padding-inline-start: calc(var(--default-grid-baseline) * 5);
+}
+
+.rh-trail li + li {
+	margin-top: calc(var(--default-grid-baseline) * 2);
 }
 </style>

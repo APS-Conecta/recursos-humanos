@@ -6,13 +6,13 @@ declare(strict_types=1);
 
 namespace OCA\RecursosHumanos\Ledger;
 
+use OCA\RecursosHumanos\Accounts;
 use OCA\RecursosHumanos\Db\Movement;
 use OCA\RecursosHumanos\Db\MovementMapper;
 use OCA\RecursosHumanos\ResponseDefinitions;
 use OCA\RecursosHumanos\RuleBook\RuleBook;
 use OCA\RecursosHumanos\WorkingDays\Unit;
 use OCP\DB\Exception;
-use OCP\IUserManager;
 
 /**
  * Ledger (recursos-humanos#1, Modules; ADR 0001): the Movements, and the Balances that are their
@@ -32,7 +32,7 @@ class Ledger {
 	public function __construct(
 		private MovementMapper $movements,
 		private RuleBook $rules,
-		private IUserManager $users,
+		private Accounts $accounts,
 	) {
 	}
 
@@ -68,16 +68,17 @@ class Ledger {
 
 	/**
 	 * The person's Balance of each Leave type in $period: the sum of its Movements, and of those
-	 * that granted the days, in the unit its rule counts in that year.
+	 * that granted the days, in the unit its rule counts in that year; and what is Available, the
+	 * Balance minus the days of the Requests in flight (CONTEXT.md).
 	 *
 	 * @param list<Movement> $movements the person's
+	 * @param array<string, float> $inFlight the days of the person's Requests in flight in $period, by Leave type
 	 * @return list<RecursosHumanosBalance>
 	 */
-	public function balances(array $movements, int $period): array {
+	public function balances(array $movements, int $period, array $inFlight = []): array {
 		$balances = [];
 		foreach (LeaveType::cases() as $type) {
-			$unit = Unit::from($this->rules->at($type->rule(), "$period-01-01")->value()['unit']);
-			$balances[$type->value] = ['leaveType' => $type->value, 'unit' => $unit->value, 'balance' => 0.0, 'granted' => 0.0];
+			$balances[$type->value] = ['leaveType' => $type->value, 'unit' => $this->unit($type, "$period-01-01")->value, 'balance' => 0.0, 'granted' => 0.0, 'available' => 0.0];
 		}
 		foreach ($movements as $movement) {
 			if ($movement->getPeriodYear() !== $period || !isset($balances[$movement->getLeaveType()])) {
@@ -88,7 +89,15 @@ class Ledger {
 				$balances[$movement->getLeaveType()]['granted'] += $movement->getQuantity();
 			}
 		}
+		foreach ($balances as $type => $balance) {
+			$balances[$type]['available'] = $balance['balance'] - ($inFlight[$type] ?? 0.0);
+		}
 		return array_values($balances);
+	}
+
+	/** The unit a Leave type's days count in on $day, as the rule that grants it says. */
+	public function unit(LeaveType $type, string $day): Unit {
+		return Unit::from($this->rules->at($type->rule(), $day)->value()['unit']);
 	}
 
 	/** @return RecursosHumanosMovement */
@@ -102,7 +111,7 @@ class Ledger {
 			'date' => $movement->getEffectiveOn(),
 			'kind' => $movement->getKind(),
 			'quantity' => $movement->getQuantity(),
-			'actor' => $actor === null ? null : ['uid' => $actor, 'name' => $this->users->getDisplayName($actor) ?? $actor],
+			'actor' => $actor === null ? null : $this->accounts->view($actor),
 			'reason' => $movement->getReason(),
 			'ruleVersion' => $rule === null ? null : [
 				'rule' => $rule,

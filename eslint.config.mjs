@@ -92,6 +92,8 @@ export default [
 				// aps-common's shared error reader (src/aps/api.js) unwraps a Blob body behind a typeof
 				// guard (Estadística's config).
 				Blob: 'readonly',
+				// A notification's link names the page it opens in the URL fragment (App.vue).
+				window: 'readonly',
 			},
 		},
 		plugins: { rh: { rules: { 'theme-only': themeOnly } } },

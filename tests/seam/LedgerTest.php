@@ -53,7 +53,7 @@ class LedgerTest extends SeamTestCase {
 			['date' => "$year-02-01", 'kind' => 'serviceRise', 'quantity' => 5, 'reason' => "Cumple 15 años de servicio: el feriado legal $year sube a 20 días hábiles."],
 			['date' => "$year-01-01", 'kind' => 'grant', 'quantity' => 15, 'reason' => "Feriado legal $year: 15 días hábiles por 14 años y 11 meses de servicio."],
 		], self::lines($person, 'annualLeave', ['date', 'kind', 'quantity', 'reason']));
-		self::assertSame(['leaveType' => 'annualLeave', 'unit' => 'habiles', 'balance' => 20, 'granted' => 20], self::balance($person, 'annualLeave'));
+		self::assertSame(['leaveType' => 'annualLeave', 'unit' => 'habiles', 'balance' => 20, 'granted' => 20, 'available' => 20], self::balance($person, 'annualLeave'));
 	}
 
 	public function testEveryBalanceIsTheSumOfMovementsThatSayWhenWhoWhyAndUnderWhichRuleVersion(): void {
@@ -216,7 +216,7 @@ class LedgerTest extends SeamTestCase {
 		self::assertGreaterThanOrEqual(144, $days['serviceMonths'], 'ten years here and two before');
 		self::assertSame(['on' => sprintf('%d-01-01', $year + 3), 'years' => 15, 'days' => 20], $days['nextRise'], '15 years: 13 here, from the start date');
 		self::assertNull($days['annualLeaveFrom']);
-		self::assertSame(['leaveType' => 'annualLeave', 'unit' => 'habiles', 'balance' => 15, 'granted' => 15], $days['balances'][0]);
+		self::assertSame(['leaveType' => 'annualLeave', 'unit' => 'habiles', 'balance' => 15, 'granted' => 15, 'available' => 15], $days['balances'][0]);
 	}
 
 	/**

@@ -10,6 +10,16 @@
 		"establishmentRule": false
 	},
 	{
+		"rule": "annualLeaveRejection",
+		"version": 1,
+		"title": "Feriado legal: la jefatura puede rechazarlo con motivo",
+		"summary": "La jefatura puede rechazar el feriado legal como cualquier solicitud, siempre escribiendo el motivo que la persona lee.",
+		"value": {"rejectable": true},
+		"basis": "Ley 19.378 art. 18, que dice que no puede denegarse discrecionalmente",
+		"from": "2026-11-19",
+		"establishmentRule": true
+	},
+	{
 		"rule": "annualLeaveEligibility",
 		"version": 1,
 		"title": "Feriado legal: desde cuándo",
