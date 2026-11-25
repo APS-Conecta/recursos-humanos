@@ -34,6 +34,9 @@ class WorkingDaysTest extends SeamTestCase {
 				['date' => '2026-05-24', 'reason' => 'weekend', 'name' => null],
 			],
 			'years' => [['year' => 2026, 'days' => 6]],
+			'unit' => 'habiles',
+			'errors' => [],
+			'available' => [],
 		], $count['data']);
 	}
 

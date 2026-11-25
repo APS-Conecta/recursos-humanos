@@ -31,10 +31,33 @@ class PersonMapper extends QBMapper {
 		return $this->findEntities($query);
 	}
 
-	private function by(string $column, string $value): ?Person {
+	/** Whether some record names $uid as its Jefatura. */
+	public function isJefatura(string $uid): bool {
+		$query = $this->db->getQueryBuilder();
+		$query->select('id')->from($this->getTableName())
+			->where($query->expr()->eq('jefatura', $query->createNamedParameter($uid)))
+			->setMaxResults(1);
+		$result = $query->executeQuery();
+		$found = $result->fetch() !== false;
+		$result->closeCursor();
+		return $found;
+	}
+
+	/**
+	 * The person's record, its row locked until the transaction ends, so that two Requests sent at
+	 * the same moment are checked one after the other.
+	 */
+	public function lock(string $uid): ?Person {
+		return $this->by('uid', $uid, true);
+	}
+
+	private function by(string $column, string $value, bool $lock = false): ?Person {
 		$query = $this->db->getQueryBuilder();
 		$query->select('*')->from($this->getTableName())
 			->where($query->expr()->eq($column, $query->createNamedParameter($value)));
+		if ($lock) {
+			$query->forUpdate();
+		}
 		try {
 			return $this->findEntity($query);
 		} catch (DoesNotExistException) {

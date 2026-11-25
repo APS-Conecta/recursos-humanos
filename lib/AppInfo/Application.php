@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace OCA\RecursosHumanos\AppInfo;
 
+use OCA\RecursosHumanos\Notification\Notifier;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -19,6 +20,7 @@ class Application extends App implements IBootstrap {
 	}
 
 	public function register(IRegistrationContext $context): void {
+		$context->registerNotifierService(Notifier::class);
 		// Everything in this app is autowired, plus one autoload rule: aps-common ships as the
 		// committed vendor/aps/common/src subtree (aps-common ADR 0001), and vendor/autoload.php is
 		// not committed, so its namespace is mapped here. In dev and tests the composer autoloader

@@ -35,13 +35,41 @@
                     }
                 }
             },
+            "Available": {
+                "type": "object",
+                "required": [
+                    "year",
+                    "balance",
+                    "inFlight",
+                    "available"
+                ],
+                "properties": {
+                    "year": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "balance": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "inFlight": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "available": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
             "Balance": {
                 "type": "object",
                 "required": [
                     "leaveType",
                     "unit",
                     "balance",
-                    "granted"
+                    "granted",
+                    "available"
                 ],
                 "properties": {
                     "leaveType": {
@@ -64,6 +92,10 @@
                         "format": "double"
                     },
                     "granted": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "available": {
                         "type": "number",
                         "format": "double"
                     }
@@ -161,6 +193,53 @@
                                 "administrativeDays"
                             ]
                         }
+                    }
+                }
+            },
+            "Decider": {
+                "type": "object",
+                "required": [
+                    "capacity",
+                    "accounts"
+                ],
+                "properties": {
+                    "capacity": {
+                        "type": "string",
+                        "enum": [
+                            "delegation",
+                            "director",
+                            "external"
+                        ]
+                    },
+                    "accounts": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Account"
+                        }
+                    }
+                }
+            },
+            "Delegation": {
+                "type": "object",
+                "required": [
+                    "number",
+                    "date",
+                    "recordedBy",
+                    "recordedAt"
+                ],
+                "properties": {
+                    "number": {
+                        "type": "string"
+                    },
+                    "date": {
+                        "type": "string"
+                    },
+                    "recordedBy": {
+                        "$ref": "#/components/schemas/Account"
+                    },
+                    "recordedAt": {
+                        "type": "integer",
+                        "format": "int64"
                     }
                 }
             },
@@ -295,7 +374,8 @@
                             "regimes",
                             "trail",
                             "days",
-                            "movements"
+                            "movements",
+                            "decider"
                         ],
                         "properties": {
                             "startDate": {
@@ -328,6 +408,9 @@
                                 "items": {
                                     "$ref": "#/components/schemas/Movement"
                                 }
+                            },
+                            "decider": {
+                                "$ref": "#/components/schemas/Decider"
                             }
                         }
                     }
@@ -392,6 +475,42 @@
                     }
                 }
             },
+            "Preview": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/Count"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "unit",
+                            "errors",
+                            "available"
+                        ],
+                        "properties": {
+                            "unit": {
+                                "type": "string",
+                                "enum": [
+                                    "habiles",
+                                    "corridos"
+                                ]
+                            },
+                            "errors": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "available": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Available"
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
             "RegimeLine": {
                 "type": "object",
                 "required": [
@@ -408,6 +527,188 @@
                     },
                     "from": {
                         "type": "string"
+                    }
+                }
+            },
+            "Request": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "person",
+                    "leaveType",
+                    "from",
+                    "to",
+                    "unit",
+                    "days",
+                    "years",
+                    "counted",
+                    "skipped",
+                    "state",
+                    "comment",
+                    "decider",
+                    "available",
+                    "ruleVersions",
+                    "trail"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "person": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "name",
+                            "rut",
+                            "cargos"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "rut": {
+                                "type": "string"
+                            },
+                            "cargos": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "leaveType": {
+                        "type": "string",
+                        "enum": [
+                            "annualLeave",
+                            "administrativeDay",
+                            "training"
+                        ]
+                    },
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "enum": [
+                            "habiles",
+                            "corridos"
+                        ]
+                    },
+                    "days": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "years": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/YearCount"
+                        }
+                    },
+                    "counted": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "skipped": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SkippedDay"
+                        }
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "approved",
+                            "rejected"
+                        ]
+                    },
+                    "comment": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "decider": {
+                        "nullable": true,
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Decider"
+                            }
+                        ]
+                    },
+                    "available": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Available"
+                        }
+                    },
+                    "ruleVersions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RuleVersion"
+                        }
+                    },
+                    "trail": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RequestStep"
+                        }
+                    }
+                }
+            },
+            "RequestStep": {
+                "type": "object",
+                "required": [
+                    "kind",
+                    "actor",
+                    "at",
+                    "capacity",
+                    "delegation",
+                    "note"
+                ],
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "asked",
+                            "approved",
+                            "rejected"
+                        ]
+                    },
+                    "actor": {
+                        "$ref": "#/components/schemas/Account"
+                    },
+                    "at": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "capacity": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "delegation",
+                            "director"
+                        ]
+                    },
+                    "delegation": {
+                        "nullable": true,
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Delegation"
+                            }
+                        ]
+                    },
+                    "note": {
+                        "type": "string",
+                        "nullable": true
                     }
                 }
             },
@@ -537,7 +838,7 @@
         "/ocs/v2.php/apps/recursos_humanos/api/v1/me": {
             "get": {
                 "operationId": "api-me",
-                "summary": "Who the caller is to «Recursos Humanos»: their account, the roles their cargo groups give, and their own record with this year's Balances and Years of service («Mis días»)",
+                "summary": "Who the caller is to «Recursos Humanos»: their account, the roles their cargo groups and the person records give, and their own record with this year's Balances and Available days, Years of service and who decides their Requests («Mis días»)",
                 "tags": [
                     "api"
                 ],
@@ -598,7 +899,8 @@
                                                             "required": [
                                                                 "hrOfficer",
                                                                 "director",
-                                                                "subdirector"
+                                                                "subdirector",
+                                                                "jefatura"
                                                             ],
                                                             "properties": {
                                                                 "hrOfficer": {
@@ -608,6 +910,9 @@
                                                                     "type": "boolean"
                                                                 },
                                                                 "subdirector": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "jefatura": {
                                                                     "type": "boolean"
                                                                 }
                                                             }
@@ -1927,7 +2232,7 @@
         "/ocs/v2.php/apps/recursos_humanos/api/v1/requests/preview": {
             "get": {
                 "operationId": "api-preview-request",
-                "summary": "A Request's count before it is sent, as «Nueva solicitud» shows it while the dates change: the days counted, the days skipped with their reason and holiday name, and the days per year; it writes nothing",
+                "summary": "A Request's count before it is sent, as «Nueva solicitud» shows it while the dates change: the days counted, the days skipped with their reason and holiday name, and the days per year. With a Leave type it counts in that type's unit and adds, for the caller, what a send would refuse on and Available in each year of the range; it writes nothing",
                 "tags": [
                     "api"
                 ],
@@ -1961,13 +2266,28 @@
                     {
                         "name": "unit",
                         "in": "query",
-                        "description": "días hábiles skip Saturdays, Sundays and Public holidays; días corridos count every day",
-                        "required": true,
+                        "description": "días hábiles skip Saturdays, Sundays and Public holidays; días corridos count every day. Required without a Leave type; with one, it must be that type's",
                         "schema": {
                             "type": "string",
+                            "nullable": true,
+                            "default": null,
                             "enum": [
                                 "habiles",
                                 "corridos"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "leaveType",
+                        "in": "query",
+                        "description": "The Leave type asked for, which sets the unit",
+                        "schema": {
+                            "type": "string",
+                            "nullable": true,
+                            "default": null,
+                            "enum": [
+                                "annualLeave",
+                                "administrativeDay"
                             ]
                         }
                     },
@@ -1984,7 +2304,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "The count",
+                        "description": "The count and its unit, with the reasons a send would be refused (none: it may be sent)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2004,7 +2324,7 @@
                                                     "$ref": "#/components/schemas/OCSMeta"
                                                 },
                                                 "data": {
-                                                    "$ref": "#/components/schemas/Count"
+                                                    "$ref": "#/components/schemas/Preview"
                                                 }
                                             }
                                         }
@@ -2014,7 +2334,1290 @@
                         }
                     },
                     "422": {
-                        "description": "A date or the unit is missing or wrong, the range ends before it starts, or, in días hábiles, the app has no Public holiday list for one of its years",
+                        "description": "A date, the unit or the Leave type is missing or wrong, the unit is not the Leave type's, the range ends before it starts, or, in días hábiles, the app has no Public holiday list for one of its years",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/requests": {
+            "get": {
+                "operationId": "api-my-requests",
+                "summary": "«Mis solicitudes»: the caller's own Requests, newest first, each with its trail and the Rule versions it was counted with",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The caller's Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "requests"
+                                                    ],
+                                                    "properties": {
+                                                        "requests": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/Request"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api-ask-request",
+                "summary": "«Nueva solicitud»: the caller asks for days of a Leave type; the Request waits for its decider, who is notified. It is refused when the caller's record is incomplete, they are on honorarios, Annual leave has not started for them, nobody can decide it, it counts no day, it overlaps another Request in flight, or it is above Available in one of its years",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "leaveType",
+                                    "from",
+                                    "to"
+                                ],
+                                "properties": {
+                                    "leaveType": {
+                                        "type": "string",
+                                        "enum": [
+                                            "annualLeave",
+                                            "administrativeDay"
+                                        ],
+                                        "description": "The Leave type"
+                                    },
+                                    "from": {
+                                        "type": "string",
+                                        "description": "The first day, YYYY-MM-DD"
+                                    },
+                                    "to": {
+                                        "type": "string",
+                                        "description": "The last day, YYYY-MM-DD, counted too"
+                                    },
+                                    "comment": {
+                                        "type": "string",
+                                        "default": "",
+                                        "description": "For the decider, up to 1000 characters"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The pending Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "request"
+                                                    ],
+                                                    "properties": {
+                                                        "request": {
+                                                            "$ref": "#/components/schemas/Request"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "A field is missing or wrong, or a check refuses it, with every reason",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/requests/{id}": {
+            "get": {
+                "operationId": "api-request",
+                "summary": "One Request with its trail and the Rule versions it was counted with: for the person, its decider, whoever acted on it, and HR officers",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "The Request's id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "request"
+                                                    ],
+                                                    "properties": {
+                                                        "request": {
+                                                            "$ref": "#/components/schemas/Request"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such Request, or it is not the caller's to read",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/decisions": {
+            "get": {
+                "operationId": "api-decisions",
+                "summary": "«Por decidir»: the pending Requests the caller decides, oldest first, each with Available before it, and the Delegation in force",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The caller's queue, empty when they decide nobody's Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "requests",
+                                                        "delegation"
+                                                    ],
+                                                    "properties": {
+                                                        "requests": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/Request"
+                                                            }
+                                                        },
+                                                        "delegation": {
+                                                            "nullable": true,
+                                                            "allOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/Delegation"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/requests/{id}/approval": {
+            "post": {
+                "operationId": "api-approve-request",
+                "summary": "«Aprobar»: the decider approves a pending Request, recorded in their capacity and, for a Jefatura, by the Delegation in force; it then waits for HR to register it, and the person is notified",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "The Request's id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The approved Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "request"
+                                                    ],
+                                                    "properties": {
+                                                        "request": {
+                                                            "$ref": "#/components/schemas/Request"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The caller may read it but does not decide it",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such Request, or it is not the caller's to read",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "It is already decided, or a Jefatura decides and HR has recorded no Delegation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/requests/{id}/rejection": {
+            "post": {
+                "operationId": "api-reject-request",
+                "summary": "«Rechazar»: the decider rejects a pending Request, always with a written reason the person reads; Annual leave too, by the establishment rule that allows it, which the Request then cites",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "Why, up to 1000 characters"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "The Request's id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The rejected Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "request"
+                                                    ],
+                                                    "properties": {
+                                                        "request": {
+                                                            "$ref": "#/components/schemas/Request"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The caller may read it but does not decide it",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such Request, or it is not the caller's to read",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "The reason is missing or too long, it is already decided, a Jefatura decides and HR has recorded no Delegation, or the Rule version in force forbids rejecting Annual leave",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/recursos_humanos/api/v1/settings/delegation": {
+            "get": {
+                "operationId": "api-delegation",
+                "summary": "«Ajustes › Delegación»: the Director's Delegation in force, which lets the Jefaturas decide on the Director's behalf",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The Delegation in force, null until HR records one",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "delegation"
+                                                    ],
+                                                    "properties": {
+                                                        "delegation": {
+                                                            "nullable": true,
+                                                            "allOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/Delegation"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api-record-delegation",
+                "summary": "«Guardar delegación»: an HR officer records the Delegation in force by its resolution's number and date; the earlier ones stay, and the decisions taken by them keep citing them",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "number",
+                                    "date"
+                                ],
+                                "properties": {
+                                    "number": {
+                                        "type": "string",
+                                        "description": "The resolution's number, up to 64 characters"
+                                    },
+                                    "date": {
+                                        "type": "string",
+                                        "description": "The resolution's date, YYYY-MM-DD, up to today"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The Delegation now in force",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "delegation"
+                                                    ],
+                                                    "properties": {
+                                                        "delegation": {
+                                                            "$ref": "#/components/schemas/Delegation"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The caller is not an HR officer",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "The number is missing or too long, or the date is not a day up to today",
                         "content": {
                             "application/json": {
                                 "schema": {

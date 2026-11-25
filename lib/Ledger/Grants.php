@@ -18,6 +18,7 @@ use OCA\RecursosHumanos\People\Service;
 use OCA\RecursosHumanos\Refused;
 use OCA\RecursosHumanos\ResponseDefinitions;
 use OCA\RecursosHumanos\RuleBook\RuleBook;
+use OCA\RecursosHumanos\Spanish;
 
 /**
  * The yearly grants (recursos-humanos#5): the days a person under the Estatuto APS receives each
@@ -119,7 +120,7 @@ class Grants {
 		$day = max((string)$this->joinedOn($person, $lines, $year), $today);
 		$most = (float)$this->rules->at(RuleBook::ADMINISTRATIVE_DAYS, $day)->value()['days'];
 		if ($days < 0 || $days > $most || fmod($days * 2, 1.0) !== 0.0) {
-			throw new Refused(sprintf(self::RANGE, self::number($most)));
+			throw new Refused(sprintf(self::RANGE, Spanish::number($most)));
 		}
 		$grant = $this->movement($person, LeaveType::AdministrativeDay, MovementKind::Grant, $day, $days,
 			$this->rules->at(RuleBook::ADMINISTRATIVE_DAYS_MID_YEAR, $day),
@@ -131,13 +132,15 @@ class Grants {
 	}
 
 	/**
-	 * «Mis días»: this year's Balances, Years of service, when Annual leave starts and its next rise.
+	 * «Mis días»: this year's Balances and Available days, Years of service, when Annual leave
+	 * starts and its next rise.
 	 *
 	 * @param list<RegimeLine> $lines oldest first
 	 * @param list<Movement> $movements the person's
+	 * @param array<string, float> $inFlight this year's days of the person's Requests in flight, by Leave type
 	 * @return RecursosHumanosDays
 	 */
-	public function summary(Person $person, array $lines, array $movements, string $today): array {
+	public function summary(Person $person, array $lines, array $movements, array $inFlight, string $today): array {
 		$start = $person->getStartDate();
 		$prior = $person->getPriorMonths();
 		$annualLeaveFrom = $this->annualLeaveFrom($person);
@@ -154,7 +157,7 @@ class Grants {
 			'serviceMonths' => Service::months($start, $prior, $today),
 			'annualLeaveFrom' => $annualLeaveFrom > $today ? $annualLeaveFrom : null,
 			'nextRise' => $nextRise,
-			'balances' => $this->ledger->balances($movements, Day::year($today)),
+			'balances' => $this->ledger->balances($movements, Day::year($today), $inFlight),
 			'missing' => $this->missing($person, $lines, $today),
 		];
 	}
@@ -183,7 +186,7 @@ class Grants {
 			$months = Service::months($start, $prior, $from);
 			$days = $this->annualLeaveDays($rule, $months);
 			$owed[] = $this->movement($person, LeaveType::AnnualLeave, MovementKind::Grant, $from, $days, $rule,
-				sprintf('Feriado legal %d: %s días hábiles por %s de servicio.', $year, self::number($days), Service::text($months)));
+				sprintf('Feriado legal %d: %s días hábiles por %s de servicio.', $year, Spanish::number($days), Service::text($months)));
 			foreach ($rule->value()['steps'] as $step) {
 				$on = Service::reached($start, $prior, $step['years'] * 12);
 				if ($on <= $from || $on > $last) {
@@ -193,7 +196,7 @@ class Grants {
 				$after = $this->annualLeaveDays($riseRule, Service::months($start, $prior, $on));
 				$before = $this->annualLeaveDays($riseRule, Service::months($start, $prior, Day::after($on, -1)));
 				$owed[] = $this->movement($person, LeaveType::AnnualLeave, MovementKind::ServiceRise, $on, $after - $before, $riseRule,
-					sprintf('Cumple %d años de servicio: el feriado legal %d sube a %s días hábiles.', $step['years'], $year, self::number($after)));
+					sprintf('Cumple %d años de servicio: el feriado legal %d sube a %s días hábiles.', $step['years'], $year, Spanish::number($after)));
 			}
 		}
 
@@ -235,7 +238,7 @@ class Grants {
 	}
 
 	/** The day Annual leave starts: when service passes the rule's months, never before the start date. */
-	private function annualLeaveFrom(Person $person): string {
+	public function annualLeaveFrom(Person $person): string {
 		$start = $person->getStartDate();
 		$months = (int)$this->rules->at(RuleBook::ANNUAL_LEAVE_ELIGIBILITY, $start)->value()['months'];
 		return max($start, Day::after(Service::reached($start, $person->getPriorMonths(), $months)));
@@ -282,10 +285,5 @@ class Grants {
 
 	private static function key(LeaveType $type, int $year, MovementKind $kind = MovementKind::Grant, ?string $day = null): string {
 		return implode(':', array_filter([$type->value, (string)$year, $kind->value, $day]));
-	}
-
-	/** 15.0 → «15», 3.5 → «3,5». */
-	private static function number(float $days): string {
-		return str_replace('.', ',', (string)round($days, 1));
 	}
 }

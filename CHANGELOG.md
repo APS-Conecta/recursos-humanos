@@ -27,3 +27,17 @@ Versioning: [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 - «Mis días» shows this year's Balances, Years of service and the next rise; the person sidebar gains «Movimientos».
   API v1: `GET me` and `GET people/{rut}` carry the record's Balances and Movements;
   `POST people/{rut}/administrative-days`.
+- The first end-to-end Request. A person asks for Annual leave or Administrative days in «Nueva solicitud», which
+  shows what stays Available and why a send would be refused: an incomplete record, honorarios, Annual leave before
+  the first year of service, an overlap with another Request in flight, or more than Available in one of its years.
+  Available is the Balance minus the Requests in flight; only registration will change the Balance. The assigned
+  Jefatura decides «por delegación del Director/a» in «Por decidir», oldest first, with Available before and after;
+  without a Jefatura the Director decides «como Director/a». A rejection needs a written reason, Annual leave too,
+  by the establishment Rule version «Feriado legal: la jefatura puede rechazarlo con motivo». Each Request keeps its
+  trail with each decision's capacity and Delegation, and the Rule versions it was counted with. Nextcloud
+  notifications reach the decider when someone asks and the person when it is decided. «Mis solicitudes» lists the
+  person's Requests with their sidebar; «Ajustes › Delegación» records the Director's Delegation. API v1:
+  `GET requests`, `POST requests`, `GET requests/{id}`, `GET decisions`, `POST requests/{id}/approval`,
+  `POST requests/{id}/rejection`, `GET` and `POST settings/delegation`; `GET requests/preview` takes an optional
+  `leaveType`, which sets the unit, and answers the unit, the refusal reasons and Available; `GET me` adds the
+  Jefatura role, Available on each Balance and who decides the person's Requests.

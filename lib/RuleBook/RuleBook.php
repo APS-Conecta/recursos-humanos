@@ -31,6 +31,7 @@ class RuleBook {
 	public const ADMINISTRATIVE_DAYS = 'administrativeDays';
 	public const ADMINISTRATIVE_DAYS_MID_YEAR = 'administrativeDaysMidYear';
 	public const TRAINING_DAYS = 'trainingDays';
+	public const ANNUAL_LEAVE_REJECTION = 'annualLeaveRejection';
 
 	private const SEED = __DIR__ . '/../../seeds/rule-versions.json';
 
@@ -92,12 +93,17 @@ class RuleBook {
 
 	/** The title of one version, for a Movement that names it. */
 	public function title(string $rule, int $version): string {
+		return $this->version($rule, $version)?->getTitle() ?? $rule;
+	}
+
+	/** One version, as a Movement or a Request cites it; null when the app does not know it. */
+	public function version(string $rule, int $version): ?RuleVersion {
 		foreach ($this->versions()[$rule] ?? [] as $known) {
 			if ($known->getVersion() === $version) {
-				return $known->getTitle();
+				return $known;
 			}
 		}
-		return $rule;
+		return null;
 	}
 
 	/**
@@ -109,7 +115,12 @@ class RuleBook {
 		$all = array_merge(...array_values($this->versions()));
 		usort($all, static fn (RuleVersion $a, RuleVersion $b): int => strcmp(Text::fold($a->getTitle()), Text::fold($b->getTitle()))
 			?: $a->getVersion() <=> $b->getVersion());
-		return array_map(static fn (RuleVersion $version): array => [
+		return array_map(self::view(...), $all);
+	}
+
+	/** @return RecursosHumanosRuleVersion */
+	public static function view(RuleVersion $version): array {
+		return [
 			'rule' => $version->getRuleId(),
 			'version' => $version->getVersion(),
 			'title' => $version->getTitle(),
@@ -117,7 +128,7 @@ class RuleBook {
 			'basis' => $version->getBasis(),
 			'from' => $version->getStartsOn(),
 			'establishmentRule' => (bool)$version->getEstablishmentRule(),
-		], $all);
+		];
 	}
 
 	/** @return array<string, list<RuleVersion>> */

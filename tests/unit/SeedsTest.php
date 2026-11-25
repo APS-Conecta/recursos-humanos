@@ -62,6 +62,7 @@ class SeedsTest extends TestCase {
 				return in_array($value['unit'] ?? null, self::UNITS, true);
 			},
 			'annualLeaveEligibility' => static fn (array $value): bool => is_int($value['months'] ?? null) && $value['months'] >= 0,
+			'annualLeaveRejection' => static fn (array $value): bool => is_bool($value['rejectable'] ?? null),
 			'administrativeDays' => static fn (array $value): bool => is_int($value['days'] ?? null) && $value['days'] >= 0
 				&& in_array($value['unit'] ?? null, self::UNITS, true),
 			'administrativeDaysMidYear' => static fn (array $value): bool => array_key_exists('days', $value) && ($value['days'] === null || is_int($value['days'])),
